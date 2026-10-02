@@ -1,0 +1,13 @@
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.41.4
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n          # n8n's own database, key and credentials (not in git)
+      - ./workflows:/repo/workflows       # exported workflow JSON (in git)
+
+volumes:
+  n8n_data:
+    external: true                        # reuse the existing volume, keeping current workflows
