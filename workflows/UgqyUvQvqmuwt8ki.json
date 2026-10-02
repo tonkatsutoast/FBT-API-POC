@@ -1,0 +1,376 @@
+{
+  "updatedAt": "2026-09-30T19:35:00.473Z",
+  "createdAt": "2026-09-30T17:45:28.245Z",
+  "id": "UgqyUvQvqmuwt8ki",
+  "name": "order.submit",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orders",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "e87a9b70-2f7a-4901-90e1-a83709053443",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2128,
+        -320
+      ],
+      "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    created_at: now.toISOString()\n  }\n}];"
+      },
+      "id": "57dd16fb-7577-4884-b4ec-7d6a3bd07faa",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1856,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "7hDIIu8oiTCAo2TY",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/7hDIIu8oiTCAo2TY",
+          "cachedResultName": "order.process"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "40d431dd-d3ca-466e-b4bd-8b42aa2dfd68",
+      "name": "Process Order",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        -1632,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "3cd9618e-ff47-474b-8091-3a614fc7405b"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "72a3839e-6597-41b8-90d8-7884755d2e5e",
+      "name": "Is Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1408,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $('Build Context').first().json;\nreturn (order.lineItems ?? []).flatMap(li =>\n  (li.personalizationData ?? []).map(s => ({\n    json: {\n      //order_id: order.order_id,\n      //sku: li.sku,\n      //jobName: li.jobName ?? '',\n      //group: s.group ?? '',\n      studentId: s.studentId,\n      firstName: s.firstName,\n      lastName: s.lastName\n    }\n  }))\n);"
+      },
+      "id": "218ecddb-d4ec-4b6b-a97d-4e0b08f2534c",
+      "name": "Students",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1056,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "={{ $('Webhook').item.json.body.lineItems[0].jobName }}_students.csv"
+        }
+      },
+      "id": "09b78a06-07e7-4447-a8ba-93baa6503c6d",
+      "name": "Students CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -880,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  po_number: ctx.po_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time\n  })),\n  student_count: $('Webhook').first().json.body.students?.length ?? 0,\n  total_amount: '$' + fmt(priced.total_cents)\n} }];"
+      },
+      "id": "9cbf22b8-31b4-472f-9c07-2a6cde46fc31",
+      "name": "Build Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -96
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "4c97c62b-7a76-410b-bccf-0e5752c69dff",
+      "name": "Respond Created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -384,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'rejected', errors: $json.errors } }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "5d857de7-35ba-4902-b9a5-78f14556ac36",
+      "name": "Respond Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -944,
+        -416
+      ]
+    },
+    {
+      "parameters": {
+        "name": "=",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "14w3wyhnpJSx76utux9PYqmIXuYFUzpwW",
+          "mode": "list",
+          "cachedResultName": "Kitetags",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/14w3wyhnpJSx76utux9PYqmIXuYFUzpwW"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -736,
+        -96
+      ],
+      "id": "e34fba3b-8504-4d70-879a-9f12e4123047",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SzrvR3BMldz3I1CS",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Context": {
+      "main": [
+        [
+          {
+            "node": "Process Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Order": {
+      "main": [
+        [
+          {
+            "node": "Is Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid": {
+      "main": [
+        [
+          {
+            "node": "Students",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Students": {
+      "main": [
+        [
+          {
+            "node": "Students CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Students CSV": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Respond Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [
+    {
+      "id": "2e437bf3-ee2e-4765-876f-8db28f2f70dd",
+      "name": "Price and validate order",
+      "nodeIds": [
+        "57dd16fb-7577-4884-b4ec-7d6a3bd07faa",
+        "40d431dd-d3ca-466e-b4bd-8b42aa2dfd68",
+        "72a3839e-6597-41b8-90d8-7884755d2e5e"
+      ],
+      "description": "Shapes the incoming order, prices it via the order.process sub-workflow, then checks whether it is valid"
+    },
+    {
+      "id": "cf628e89-a251-429d-8a4d-77bbf0b1b507",
+      "name": "Confirm accepted order",
+      "nodeIds": [
+        "218ecddb-d4ec-4b6b-a97d-4e0b08f2534c",
+        "09b78a06-07e7-4447-a8ba-93baa6503c6d",
+        "9cbf22b8-31b4-472f-9c07-2a6cde46fc31",
+        "4c97c62b-7a76-410b-bccf-0e5752c69dff",
+        "e34fba3b-8504-4d70-879a-9f12e4123047"
+      ]
+    }
+  ],
+  "pinData": {},
+  "versionId": "8c322efd-a120-4cfe-853f-4e0573f38c16",
+  "activeVersionId": null,
+  "versionCounter": 44,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-09-30T17:45:28.249Z",
+      "createdAt": "2026-09-30T17:45:28.249Z",
+      "role": "workflow:owner",
+      "workflowId": "UgqyUvQvqmuwt8ki",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

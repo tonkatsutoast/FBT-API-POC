@@ -1,0 +1,140 @@
+{
+  "updatedAt": "2026-10-01T20:35:52.461Z",
+  "createdAt": "2026-10-01T19:39:00.876Z",
+  "id": "duvuYNULUxzRD1KU",
+  "name": "catalog.upsert",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "catalog",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -432,
+        -160
+      ],
+      "id": "01052da6-57aa-4aa4-b72f-4d9d6be9aa12",
+      "name": "Webhook",
+      "webhookId": "018926dd-9c91-4588-bd17-34a88e6ff09c"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZqFopBIVipEw0QG8",
+          "mode": "list",
+          "cachedResultName": "catalog_json",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/ZqFopBIVipEw0QG8"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ Number($json.body.customer_id) }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "catalog_json": "={{ JSON.stringify($json.body.products) }}",
+            "customer_id": "={{ Number($json.body.customer_id) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "catalog_json",
+              "displayName": "catalog_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        -160
+      ],
+      "id": "27918dab-489c-400b-aefd-a5f6bf10bf23",
+      "name": "Upsert row(s)"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "b492fb91-e4ad-4f51-9fed-d11ce1a6801f",
+  "activeVersionId": null,
+  "versionCounter": 34,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-10-01T19:39:00.880Z",
+      "createdAt": "2026-10-01T19:39:00.880Z",
+      "role": "workflow:owner",
+      "workflowId": "duvuYNULUxzRD1KU",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

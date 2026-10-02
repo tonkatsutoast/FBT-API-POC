@@ -1,0 +1,689 @@
+{
+  "updatedAt": "2026-10-01T21:20:17.368Z",
+  "createdAt": "2026-10-01T20:46:35.299Z",
+  "id": "L83rLZXeyKivjWUI",
+  "name": "catalog.admin",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "catalog-admin",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "18470021-3b3d-4f5a-8c4f-25ef6a6bf5b3",
+      "name": "Admin Page",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        -176
+      ],
+      "webhookId": "a1b8b7c5-e876-4fdd-9419-a8a1538c3010"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>Catalog Admin</title>\n<style>\n  :root { --fg:#1f2328; --muted:#656d76; --line:#d0d7de; --bg:#fff; --soft:#f6f8fa; --accent:#0969da; --danger:#cf222e; --ok:#1a7f37; }\n  * { box-sizing: border-box; }\n  body { margin:0; font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--fg); background:var(--bg); }\n  main { max-width: 980px; margin: 0 auto; padding: 24px 16px 48px; }\n  h1 { font-size: 20px; margin: 0 0 16px; }\n  h2 { font-size: 16px; margin: 0 0 12px; }\n  .card { border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:16px; }\n  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:end; }\n  label { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--muted); }\n  input, textarea { font:inherit; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; background:var(--bg); }\n  input.wide { width: 420px; max-width: 100%; }\n  textarea { width:100%; min-height:420px; font-family: ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.5px; }\n  button { font:inherit; border:1px solid var(--line); background:var(--soft); border-radius:6px; padding:6px 12px; cursor:pointer; }\n  button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }\n  button.danger { color:var(--danger); }\n  button:disabled { opacity:.5; cursor:default; }\n  table { width:100%; border-collapse:collapse; }\n  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); }\n  th { font-size:12px; color:var(--muted); font-weight:600; }\n  td.actions { text-align:right; white-space:nowrap; }\n  .msg { margin-top:10px; font-size:13px; white-space:pre-wrap; }\n  .msg.error { color:var(--danger); }\n  .msg.ok { color:var(--ok); }\n  .hidden { display:none; }\n  .muted { color:var(--muted); }\n</style>\n</head>\n<body>\n<main>\n  <h1>Catalog Admin</h1>\n\n  <section class=\"card\">\n    <h2>Connection</h2>\n    <div class=\"row\">\n      <label>Webhook base URL\n        <input id=\"base\" class=\"wide\" value=\"https://YOUR-INSTANCE.app.n8n.cloud/webhook\">\n      </label>\n      <label>Admin key\n        <input id=\"key\" type=\"password\" placeholder=\"X-Admin-Key value\">\n      </label>\n      <button class=\"primary\" id=\"connect\">Connect</button>\n    </div>\n    <div id=\"connMsg\" class=\"msg muted\">Use the production webhook URL (the workflow must be active).</div>\n  </section>\n\n  <section class=\"card\" id=\"listCard\">\n    <div class=\"row\" style=\"justify-content:space-between; margin-bottom:8px;\">\n      <h2 style=\"margin:0\">Catalogs</h2>\n      <div class=\"row\">\n        <button id=\"refresh\">Refresh</button>\n        <button class=\"primary\" id=\"newBtn\">New catalog</button>\n      </div>\n    </div>\n    <table>\n      <thead><tr><th>Customer ID</th><th>Products</th><th>Last updated</th><th></th></tr></thead>\n      <tbody id=\"rows\"><tr><td colspan=\"4\" class=\"muted\">Not connected.</td></tr></tbody>\n    </table>\n    <div id=\"listMsg\" class=\"msg\"></div>\n  </section>\n\n  <section class=\"card hidden\" id=\"editCard\">\n    <h2 id=\"editTitle\">Edit catalog</h2>\n    <div class=\"row\" style=\"margin-bottom:10px;\">\n      <label>Customer ID\n        <input id=\"custId\" type=\"number\" min=\"1\" step=\"1\">\n      </label>\n    </div>\n    <label>Products (JSON array)\n      <textarea id=\"json\" spellcheck=\"false\"></textarea>\n    </label>\n    <div class=\"row\" style=\"margin-top:10px;\">\n      <button id=\"validateBtn\">Validate &amp; format</button>\n      <button class=\"primary\" id=\"saveBtn\">Save</button>\n      <button id=\"cancelBtn\">Cancel</button>\n    </div>\n    <div id=\"editMsg\" class=\"msg\"></div>\n  </section>\n</main>\n\n<script>\n(() => {\n  const $ = id => document.getElementById(id);\n  let adminKey = '';\n  let catalogs = [];\n  let editingExisting = false;\n\n  const TEMPLATE = [\n    {\n      \"Title\": \"New Product\",\n      \"SKU\": \"SKU-001\",\n      \"Description\": \"\",\n      \"Lead Time\": \"\",\n      \"Minimum Order\": 1,\n      \"Pricing\": {\n        \"tiers_mode\": \"volume\",\n        \"tiers\": [\n          { \"up_to\": 499, \"unit_amount_cents\": 100 },\n          { \"up_to\": null, \"unit_amount_cents\": 80 }\n        ]\n      }\n    }\n  ];\n\n  const esc = s => String(s ?? '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c]));\n  const base = () => $('base').value.trim().replace(/\\/+$/, '');\n  const setMsg = (id, text, kind) => { const el = $(id); el.textContent = text || ''; el.className = 'msg' + (kind ? ' ' + kind : ''); };\n\n  async function api(method, path, body) {\n    const headers = { 'X-Admin-Key': adminKey };\n    if (body !== undefined) headers['Content-Type'] = 'application/json';\n    const res = await fetch(base() + '/' + path, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });\n    const text = await res.text();\n    let data = null;\n    try { data = text ? JSON.parse(text) : null; } catch { data = text; }\n    if (!res.ok) {\n      const detail = data && typeof data === 'object' ? (data.error || data.message) : data;\n      throw new Error(`${res.status}: ${detail || res.statusText}`);\n    }\n    return data;\n  }\n\n  // Same rules as the server-side \"Validate Catalog\" node\n  function validate(products) {\n    const errors = [];\n    if (!Array.isArray(products) || products.length === 0) return ['Catalog must be a non-empty JSON array of products'];\n    const seen = new Set();\n    products.forEach((p, i) => {\n      const at = `Product ${i + 1}${p && p.SKU ? ` (${p.SKU})` : ''}`;\n      if (!p || typeof p !== 'object') { errors.push(`${at}: must be an object`); return; }\n      if (!p.SKU || typeof p.SKU !== 'string') errors.push(`${at}: SKU is required`);\n      else if (seen.has(p.SKU)) errors.push(`${at}: duplicate SKU`);\n      else seen.add(p.SKU);\n      if (!p.Title) errors.push(`${at}: Title is required`);\n      if (p['Minimum Order'] != null && (!Number.isInteger(p['Minimum Order']) || p['Minimum Order'] < 1))\n        errors.push(`${at}: Minimum Order must be a positive integer`);\n      const t = p.Pricing && p.Pricing.tiers;\n      if (!Array.isArray(t) || t.length === 0) { errors.push(`${at}: Pricing.tiers must be a non-empty array`); return; }\n      t.forEach((tier, j) => {\n        if (!Number.isInteger(tier.unit_amount_cents) || tier.unit_amount_cents < 0)\n          errors.push(`${at}: tier ${j + 1} unit_amount_cents must be a non-negative integer`);\n        const last = j === t.length - 1;\n        if (last && tier.up_to !== null) errors.push(`${at}: last tier must have up_to: null`);\n        if (!last) {\n          if (!Number.isInteger(tier.up_to)) errors.push(`${at}: tier ${j + 1} up_to must be an integer`);\n          else if (j > 0 && Number.isInteger(t[j - 1].up_to) && tier.up_to <= t[j - 1].up_to)\n            errors.push(`${at}: tiers must be in ascending up_to order`);\n        }\n      });\n    });\n    return errors;\n  }\n\n  function render() {\n    const tbody = $('rows');\n    if (!catalogs.length) { tbody.innerHTML = '<tr><td colspan=\"4\" class=\"muted\">No catalogs yet.</td></tr>'; return; }\n    tbody.innerHTML = catalogs\n      .slice()\n      .sort((a, b) => a.customer_id - b.customer_id)\n      .map(c => `<tr>\n        <td>${esc(c.customer_id)}</td>\n        <td>${esc(c.product_count)}</td>\n        <td>${c.updated_at ? esc(new Date(c.updated_at).toLocaleString()) : ''}</td>\n        <td class=\"actions\">\n          <button data-edit=\"${esc(c.customer_id)}\">Edit</button>\n          <button class=\"danger\" data-del=\"${esc(c.customer_id)}\">Delete</button>\n        </td></tr>`).join('');\n  }\n\n  async function loadList() {\n    setMsg('listMsg', 'Loading…');\n    try {\n      const data = await api('GET', 'admin/catalogs');\n      catalogs = Array.isArray(data) ? data : [];\n      render();\n      setMsg('listMsg', '');\n      setMsg('connMsg', 'Connected.', 'ok');\n    } catch (e) {\n      setMsg('listMsg', 'Could not load catalogs — ' + e.message, 'error');\n    }\n  }\n\n  function openEditor(customerId, products, existing) {\n    editingExisting = existing;\n    $('editTitle').textContent = existing ? `Edit catalog — customer ${customerId}` : 'New catalog';\n    $('custId').value = customerId ?? '';\n    $('custId').disabled = existing;\n    $('json').value = JSON.stringify(products, null, 2);\n    setMsg('editMsg', '');\n    $('editCard').classList.remove('hidden');\n    $('editCard').scrollIntoView({ behavior: 'smooth' });\n  }\n\n  function closeEditor() { $('editCard').classList.add('hidden'); }\n\n  function readEditor() {\n    let products;\n    try { products = JSON.parse($('json').value); }\n    catch (e) { return { errors: ['Invalid JSON — ' + e.message] }; }\n    const errors = validate(products);\n    const id = Number($('custId').value);\n    if (!Number.isInteger(id) || id < 1) errors.unshift('Customer ID must be a positive integer');\n    if (!editingExisting && catalogs.some(c => c.customer_id === id)) errors.unshift(`Customer ${id} already has a catalog — use Edit instead`);\n    return { id, products, errors };\n  }\n\n  $('connect').onclick = () => { adminKey = $('key').value; loadList(); };\n  $('refresh').onclick = loadList;\n  $('newBtn').onclick = () => openEditor('', TEMPLATE, false);\n  $('cancelBtn').onclick = closeEditor;\n\n  $('validateBtn').onclick = () => {\n    const { products, errors } = readEditor();\n    if (errors.length) { setMsg('editMsg', errors.join('\\n'), 'error'); return; }\n    $('json').value = JSON.stringify(products, null, 2);\n    setMsg('editMsg', `Valid — ${products.length} product(s).`, 'ok');\n  };\n\n  $('saveBtn').onclick = async () => {\n    const { id, products, errors } = readEditor();\n    if (errors.length) { setMsg('editMsg', errors.join('\\n'), 'error'); return; }\n    $('saveBtn').disabled = true;\n    setMsg('editMsg', 'Saving…');\n    try {\n      await api('POST', 'admin/catalog', { customer_id: id, products });\n      setMsg('editMsg', 'Saved.', 'ok');\n      await loadList();\n      closeEditor();\n    } catch (e) {\n      setMsg('editMsg', 'Save failed — ' + e.message, 'error');\n    } finally {\n      $('saveBtn').disabled = false;\n    }\n  };\n\n  $('rows').onclick = async ev => {\n    const editId = ev.target.getAttribute('data-edit');\n    const delId = ev.target.getAttribute('data-del');\n    if (editId) {\n      setMsg('listMsg', 'Loading catalog…');\n      try {\n        const products = await api('GET', 'admin/catalog?customer_id=' + encodeURIComponent(editId));\n        setMsg('listMsg', '');\n        openEditor(Number(editId), products, true);\n      } catch (e) { setMsg('listMsg', 'Could not load catalog — ' + e.message, 'error'); }\n    }\n    if (delId) {\n      if (!confirm(`Delete the catalog for customer ${delId}? Orders for this customer will be rejected until a new catalog is saved.`)) return;\n      try {\n        await api('DELETE', 'admin/catalog?customer_id=' + encodeURIComponent(delId));\n        await loadList();\n      } catch (e) { setMsg('listMsg', 'Delete failed — ' + e.message, 'error'); }\n    }\n  };\n})();\n</script>\n</body>\n</html>\n",
+        "options": {}
+      },
+      "id": "f65e66d8-3137-493e-bc4b-294dd07af81e",
+      "name": "Respond Page",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -80,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "path": "admin/catalogs",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "309614b5-ce7f-4847-8b50-bcb4e861eec1",
+      "name": "List Catalogs",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        48
+      ],
+      "webhookId": "6d5b5052-5ee3-4697-a54c-a3195a9a6a64",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wXGqqyGNGefL6Ye6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ZqFopBIVipEw0QG8",
+          "mode": "list",
+          "cachedResultName": "catalog_json",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/ZqFopBIVipEw0QG8"
+        },
+        "returnAll": true
+      },
+      "id": "c1b7c677-30e2-422d-8da5-e3cfeaa0d16a",
+      "name": "Get All Catalogs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        176
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $input.all().filter(i => i.json.customer_id != null).map(i => ({ customer_id: i.json.customer_id, product_count: i.json.catalog_json ? i.json.catalog_json.parseJson().length : 0, updated_at: i.json.updatedAt })) }}",
+        "options": {}
+      },
+      "id": "ef25c24b-6945-4349-bc89-9e459394ee74",
+      "name": "Respond List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        192,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "path": "admin/catalog",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "c81bcadd-5f00-4621-963c-d7b3526333ed",
+      "name": "Get Catalog Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        272
+      ],
+      "webhookId": "e67f60eb-ef17-4ca2-80ba-046d438cc479",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wXGqqyGNGefL6Ye6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "catalog_json",
+          "mode": "name"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ Number($json.query.customer_id) }}"
+            }
+          ]
+        }
+      },
+      "id": "b06d250a-1d1e-4487-9289-a8a4b8984b43",
+      "name": "Get One Catalog",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        496
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-catalog",
+              "leftValue": "={{ $json.catalog_json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8bfb82ef-17fc-40d8-871b-36b838e7ad9e",
+      "name": "Catalog Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.catalog_json.parseJson() }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "2758b89e-c215-47e7-8938-f655a44f2a12",
+      "name": "Respond Catalog",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'Catalog not found' } }}",
+        "options": {
+          "responseCode": 404
+        }
+      },
+      "id": "1ba7f7fa-c2fb-49c8-8364-0ac36ef8f682",
+      "name": "Respond Not Found",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "admin/catalog",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*",
+          "rawBody": false
+        }
+      },
+      "id": "55c88d72-707b-467c-9c9f-03fdb36997ff",
+      "name": "Save Catalog Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        496
+      ],
+      "webhookId": "35495f15-56e7-4edc-b31d-9f6afefd9a8c",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wXGqqyGNGefL6Ye6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $input.first().json.body ?? {};\nconst errors = [];\nconst id = Number(b.customer_id);\nif (!Number.isInteger(id) || id < 1) errors.push('customer_id must be a positive integer');\n\nconst products = b.products;\nif (!Array.isArray(products) || !products.length) errors.push('products must be a non-empty array');\n\nconst seen = new Set();\nfor (const [i, p] of (Array.isArray(products) ? products : []).entries()) {\n  const at = `Product ${i + 1}${p?.SKU ? ` (${p.SKU})` : ''}`;\n  if (!p?.SKU) errors.push(`${at}: SKU is required`);\n  else if (seen.has(p.SKU)) errors.push(`${at}: duplicate SKU`);\n  else seen.add(p.SKU);\n  if (!p?.Title) errors.push(`${at}: Title is required`);\n  const min = p?.['Minimum Order'];\n  if (min != null && (!Number.isInteger(min) || min < 1)) errors.push(`${at}: Minimum Order must be a positive integer`);\n  const t = p?.Pricing?.tiers;\n  if (!Array.isArray(t) || !t.length) { errors.push(`${at}: Pricing.tiers must be a non-empty array`); continue; }\n  t.forEach((tier, j) => {\n    if (!Number.isInteger(tier.unit_amount_cents) || tier.unit_amount_cents < 0) errors.push(`${at}: tier ${j + 1} price must be a non-negative integer (cents)`);\n    const last = j === t.length - 1;\n    if (last && tier.up_to !== null) errors.push(`${at}: last tier must have up_to: null`);\n    if (!last && !Number.isInteger(tier.up_to)) errors.push(`${at}: tier ${j + 1} up_to must be an integer`);\n    if (!last && j > 0 && tier.up_to <= t[j - 1].up_to) errors.push(`${at}: tiers must be ascending`);\n  });\n}\n\nreturn [{ json: { valid: errors.length === 0, errors, customer_id: id, catalog_json: JSON.stringify(products ?? []) } }];"
+      },
+      "id": "e3706029-b634-41bb-b6a5-937f83e232a3",
+      "name": "Validate Catalog",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "is-valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "41b305d6-f3a0-4a9d-bbf9-d3f6cf730080",
+      "name": "Catalog Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        192,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "catalog_json",
+          "mode": "name"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ $json.customer_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "customer_id": "={{ $json.customer_id }}",
+            "catalog_json": "={{ $json.catalog_json }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "catalog_json",
+              "displayName": "catalog_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "94475375-2b88-4a42-a972-3e48a94ecbd7",
+      "name": "Upsert Catalog",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'saved', customer_id: $('Validate Catalog').first().json.customer_id } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "7a15632e-791f-4b96-9bac-2c5a21b969c3",
+      "name": "Respond Saved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        640,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.errors.join('; ') } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "763f57e7-5361-4d33-9c15-dd8bfe3a47b6",
+      "name": "Respond Invalid",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "admin/catalog",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "2d63fec2-88f0-49f3-b751-2c2c5f1e15a1",
+      "name": "Delete Catalog Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        720
+      ],
+      "webhookId": "2bad5426-9004-4518-9b49-33c3ccbdf3cb",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "wXGqqyGNGefL6Ye6",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "catalog_json",
+          "mode": "name"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ Number($json.query.customer_id) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eb950f20-0363-405e-8c19-a503b86bb663",
+      "name": "Delete Catalog Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'deleted', customer_id: Number($('Delete Catalog Webhook').first().json.query.customer_id) } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "630ce379-6202-4f7a-91a4-befcd2c71518",
+      "name": "Respond Deleted",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        192,
+        848
+      ]
+    }
+  ],
+  "connections": {
+    "Admin Page": {
+      "main": [
+        [
+          {
+            "node": "Respond Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Catalogs": {
+      "main": [
+        [
+          {
+            "node": "Get All Catalogs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Catalogs": {
+      "main": [
+        [
+          {
+            "node": "Respond List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Catalog Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get One Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get One Catalog": {
+      "main": [
+        [
+          {
+            "node": "Catalog Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catalog Found?": {
+      "main": [
+        [
+          {
+            "node": "Respond Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Catalog Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Catalog": {
+      "main": [
+        [
+          {
+            "node": "Catalog Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catalog Valid?": {
+      "main": [
+        [
+          {
+            "node": "Upsert Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Catalog": {
+      "main": [
+        [
+          {
+            "node": "Respond Saved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Catalog Webhook": {
+      "main": [
+        [
+          {
+            "node": "Delete Catalog Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Catalog Row": {
+      "main": [
+        [
+          {
+            "node": "Respond Deleted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [
+    {
+      "id": "30ff7e30-8a5a-4923-b452-26e93d68055a",
+      "name": "Return catalog list",
+      "nodeIds": [
+        "c1b7c677-30e2-422d-8da5-e3cfeaa0d16a",
+        "ef25c24b-6945-4349-bc89-9e459394ee74"
+      ],
+      "description": "Reads every stored catalog and replies with customer, product count and last update"
+    },
+    {
+      "id": "a02cd13c-c27a-4736-880a-c95d6b3ebec3",
+      "name": "Return one catalog",
+      "nodeIds": [
+        "b06d250a-1d1e-4487-9289-a8a4b8984b43",
+        "8bfb82ef-17fc-40d8-871b-36b838e7ad9e",
+        "2758b89e-c215-47e7-8938-f655a44f2a12",
+        "1ba7f7fa-c2fb-49c8-8364-0ac36ef8f682"
+      ],
+      "description": "Looks up a customer by id; replies with their catalog or a 404 if none exists"
+    },
+    {
+      "id": "8613af57-fd76-4f19-938f-2ad2289d4f99",
+      "name": "Save customer catalog",
+      "nodeIds": [
+        "e3706029-b634-41bb-b6a5-937f83e232a3",
+        "41b305d6-f3a0-4a9d-bbf9-d3f6cf730080",
+        "763f57e7-5361-4d33-9c15-dd8bfe3a47b6",
+        "94475375-2b88-4a42-a972-3e48a94ecbd7",
+        "7a15632e-791f-4b96-9bac-2c5a21b969c3"
+      ],
+      "description": "Checks the posted catalog; rejects invalid input with 400, otherwise creates or updates the row"
+    },
+    {
+      "id": "df128bf4-3bf5-4ed0-8198-cef076f97b37",
+      "name": "Remove customer catalog",
+      "nodeIds": [
+        "eb950f20-0363-405e-8c19-a503b86bb663",
+        "630ce379-6202-4f7a-91a4-befcd2c71518"
+      ],
+      "description": "Deletes the stored catalog for the given customer id and confirms"
+    }
+  ],
+  "pinData": {},
+  "versionId": "7deb8d16-88ac-40bf-9898-d506c2f43b0f",
+  "activeVersionId": null,
+  "versionCounter": 29,
+  "triggerCount": 5,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-10-01T20:46:35.304Z",
+      "createdAt": "2026-10-01T20:46:35.304Z",
+      "role": "workflow:owner",
+      "workflowId": "L83rLZXeyKivjWUI",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": "Version 7deb8d16",
+    "description": ""
+  }
+}

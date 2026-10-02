@@ -1,0 +1,126 @@
+{
+  "updatedAt": "2026-09-30T18:55:23.581Z",
+  "createdAt": "2026-09-30T17:45:57.027Z",
+  "id": "7hDIIu8oiTCAo2TY",
+  "name": "order.process",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "3c978b11-d0d9-4e91-b19c-3636476de658",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -272,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "catalog_json",
+          "mode": "name"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ $json.customer_id }}"
+            }
+          ]
+        }
+      },
+      "id": "11535f21-ad84-4853-a2b5-d1429e2212e1",
+      "name": "Get Catalog",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -48,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('When Executed by Another Workflow').first().json;\nconst row = $input.first().json;\n\nif (!row?.catalog_json) {\n  return [{ json: { valid: false, errors: [`No catalog for customer ${input.customer_id}`] } }];\n}\n\nconst bySku = new Map(JSON.parse(row.catalog_json).map(p => [p.SKU, p]));\nconst errors = [];\n\n// Consolidate duplicate SKUs so volume tiers apply to the true total\nconst qtyBySku = new Map();\nfor (const [i, li] of (input.lineItems ?? []).entries()) {\n  if (!bySku.has(li.sku)) { errors.push(`Line ${i + 1}: unknown SKU '${li.sku}'`); continue; }\n  if (!Number.isInteger(li.quantity) || li.quantity < 1) { errors.push(`Line ${i + 1}: invalid quantity '${li.quantity}'`); continue; }\n  qtyBySku.set(li.sku, (qtyBySku.get(li.sku) ?? 0) + li.quantity);\n}\nif (!qtyBySku.size && !errors.length) errors.push('Order has no line items');\n\nconst line_items = [...qtyBySku].map(([sku, quantity]) => {\n  const p = bySku.get(sku);\n  const tier = p.Pricing.tiers.find(t => t.up_to === null || quantity <= t.up_to);\n  return {\n    sku,\n    title: p.Title,\n    quantity,\n    unit_amount_cents: tier.unit_amount_cents,\n    line_total_cents: quantity * tier.unit_amount_cents,\n    lead_time: p['Lead Time']\n  };\n});\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    currency: 'USD',\n    line_items,\n    total_cents: line_items.reduce((s, l) => s + l.line_total_cents, 0)\n  }\n}];"
+      },
+      "id": "a84b4e49-cdfc-4e5a-9621-47c7afbade9d",
+      "name": "Price Order",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Catalog": {
+      "main": [
+        [
+          {
+            "node": "Price Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "39779560-be8e-4272-8444-ef818eb23e8e",
+  "activeVersionId": null,
+  "versionCounter": 7,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-09-30T17:45:57.030Z",
+      "createdAt": "2026-09-30T17:45:57.030Z",
+      "role": "workflow:owner",
+      "workflowId": "7hDIIu8oiTCAo2TY",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

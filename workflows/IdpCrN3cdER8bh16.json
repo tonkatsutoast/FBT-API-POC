@@ -1,0 +1,525 @@
+{
+  "updatedAt": "2026-10-01T18:29:23.737Z",
+  "createdAt": "2026-10-01T18:20:32.768Z",
+  "id": "IdpCrN3cdER8bh16",
+  "name": "order.submit_v2",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "orders",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "b8bce9b6-9293-4b14-b246-684005eb9418",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1392,
+        -48
+      ],
+      "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
+    },
+    {
+      "parameters": {
+        "jsCode": "const b = $json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    created_at: now.toISOString()\n  }\n}];"
+      },
+      "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1072,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "shUWBLVLPo5SUnGh",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/shUWBLVLPo5SUnGh",
+          "cachedResultName": "order.process"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "e6a60112-0131-467a-8a5f-b1126be8ba2b",
+      "name": "Process Order",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        -848,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11",
+      "name": "Is Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -624,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_CRM.od2.vtiger.com/restapi/v1/vtiger/default/query",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ \"SELECT id, productcode FROM Products WHERE productcode IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.sku + \"'\").join(\",\") + \");\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "071b8519-d437-4c31-9798-6f1c18632f42",
+      "name": "Lookup Products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -368,
+        -48
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// paste bui// ---- Pilot constants (move to customer config later) ----\nconst VTIGER_ACCOUNT_ID = '11x000';   // Account webservice id (moduleIdxRecordId)\nconst ASSIGNED_USER_ID  = '19x1';     // from GET /me\nconst ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst found  = $('Lookup Products').first().json.result ?? [];\n\nconst idBySku = new Map(found.map(p => [p.productcode, p.id]));\nconst missing = priced.line_items.filter(l => !idBySku.has(l.sku)).map(l => l.sku);\nif (missing.length) throw new Error(`SKUs missing in VTiger Products: ${missing.join(', ')}`);\n\nconst element = {\n  subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  account_id: VTIGER_ACCOUNT_ID,\n  assigned_user_id: ASSIGNED_USER_ID,\n  sostatus: 'Created',\n  purchaseorder: ctx.po_number ?? '',\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idBySku.get(l.sku),\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\nreturn [{ json: { element: JSON.stringify(element) } }];ld-salesorder code here"
+      },
+      "id": "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
+      "name": "Build SalesOrder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_CRM.od2.vtiger.com/restapi/v1/vtiger/default/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "elementType",
+              "value": "SalesOrder"
+            },
+            {
+              "name": "element",
+              "value": "={{ $json.element }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
+      "name": "Create SalesOrder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        80,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ $json.body.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f0c12b63-ff42-449d-92f8-e59ff6f99007",
+      "name": "SO Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        304,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $('Build Context').first().json;\nreturn (order.lineItems ?? []).flatMap(li =>\n  (li.personalizationData ?? []).map(s => ({\n    json: {\n      //order_id: order.order_id,\n      //sku: li.sku,\n      //jobName: li.jobName ?? '',\n      //group: s.group ?? '',\n      studentId: s.studentId,\n      firstName: s.firstName,\n      lastName: s.lastName\n    }\n  }))\n);"
+      },
+      "id": "f062981a-eefd-471d-9ac1-84afd9619226",
+      "name": "Students",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "={{ $('Build Context').first().json.order_id }}_students.csv"
+        }
+      },
+      "id": "2e9b5bbd-4c0b-4406-b870-35c23a165670",
+      "name": "Students CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  po_number: ctx.po_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: $('Webhook').first().json.body.students?.length ?? 0,\n  total_amount: fmt(priced.total_cents)\n} }];"
+      },
+      "id": "b0b76abf-8361-4ffc-aafb-3433a28034bc",
+      "name": "Build Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        -128
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "0935027a-755e-4e09-bd3f-5c5cfb20071f",
+      "name": "Respond Created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', errors: ['Sales order could not be created in CRM'], detail: $json.statusMessage } }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "1c6e285f-6196-4487-ab20-c3cf4fec4d0e",
+      "name": "Respond CRM Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        528,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'rejected', errors: $json.errors } }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "aa432b36-620f-46e0-9937-d95c47e35acb",
+      "name": "Respond Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -256,
+        160
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Context": {
+      "main": [
+        [
+          {
+            "node": "Process Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Order": {
+      "main": [
+        [
+          {
+            "node": "Is Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid": {
+      "main": [
+        [
+          {
+            "node": "Lookup Products",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Products": {
+      "main": [
+        [
+          {
+            "node": "Build SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build SalesOrder": {
+      "main": [
+        [
+          {
+            "node": "Create SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create SalesOrder": {
+      "main": [
+        [
+          {
+            "node": "SO Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SO Created": {
+      "main": [
+        [
+          {
+            "node": "Students",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond CRM Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Students": {
+      "main": [
+        [
+          {
+            "node": "Students CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Students CSV": {
+      "main": [
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Respond Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [
+    {
+      "id": "612f5312-15e0-4325-a814-a82e922051af",
+      "name": "Price and validate order",
+      "nodeIds": [
+        "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
+        "e6a60112-0131-467a-8a5f-b1126be8ba2b",
+        "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11"
+      ],
+      "description": "Shapes the incoming order, prices it via the order.process sub-workflow, then checks whether it is valid"
+    },
+    {
+      "id": "5cce1068-c2f8-4884-8426-e3fe17d588aa",
+      "name": "Create CRM sales order",
+      "nodeIds": [
+        "071b8519-d437-4c31-9798-6f1c18632f42",
+        "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
+        "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
+        "f0c12b63-ff42-449d-92f8-e59ff6f99007"
+      ],
+      "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
+    },
+    {
+      "id": "1b490d81-b3f9-4a4a-8e18-2ca698dda887",
+      "name": "Confirm accepted order",
+      "nodeIds": [
+        "f062981a-eefd-471d-9ac1-84afd9619226",
+        "2e9b5bbd-4c0b-4406-b870-35c23a165670",
+        "b0b76abf-8361-4ffc-aafb-3433a28034bc",
+        "0935027a-755e-4e09-bd3f-5c5cfb20071f"
+      ],
+      "description": "For valid orders: builds the student roster file and returns a 201 confirmation to the caller"
+    }
+  ],
+  "pinData": {},
+  "versionId": "91a14459-f502-4a81-bb41-0b2d142f147c",
+  "activeVersionId": null,
+  "versionCounter": 16,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-10-01T18:20:32.772Z",
+      "createdAt": "2026-10-01T18:20:32.772Z",
+      "role": "workflow:owner",
+      "workflowId": "IdpCrN3cdER8bh16",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

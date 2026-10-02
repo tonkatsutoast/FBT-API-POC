@@ -1,0 +1,132 @@
+{
+  "updatedAt": "2026-10-01T17:01:11.112Z",
+  "createdAt": "2026-09-30T19:38:20.626Z",
+  "id": "QAJDwJ6CMaqdd3Hh",
+  "name": "catalog.retrieve",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "catalog",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -736,
+        -64
+      ],
+      "id": "d53d9470-aa74-4999-bbba-591d433822e3",
+      "name": "Webhook",
+      "webhookId": "da5009bd-2903-40e7-8eaf-9e6a624fb53b"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "catalog_json",
+          "mode": "name"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ Number($json.query.customer_id) }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "id": "e12ff3cc-3b0f-4e49-8a3f-a754c2489914",
+      "name": "Get Catalog",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -496,
+        -64
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"customer_id\": {{ $json.customer_id }},\n  \"products\": {{ $json.catalog_json }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -240,
+        -48
+      ],
+      "id": "f38ca873-1521-47bc-8686-65ce3cb53b25",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Catalog": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "0791bedb-a75e-41ea-a528-858a18aa4169",
+  "activeVersionId": null,
+  "versionCounter": 70,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-09-30T19:38:20.630Z",
+      "createdAt": "2026-09-30T19:38:20.630Z",
+      "role": "workflow:owner",
+      "workflowId": "QAJDwJ6CMaqdd3Hh",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
