@@ -1,0 +1,133 @@
+{
+    "customer_id": 1,
+    "products": [
+        {
+            "Title":"Cards – Personalized – Ships from USA",
+            "SKU":"21-2735-CSB-PRINT",
+            "Description":"Location: USA Service Bureau Services Performed: Personalization printing, UID collection Lead time: 2 weeks or less",
+            "Lead Time": "2 weeks or less",
+            "Minimum Order": 100,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": 199,  "unit_amount_cents": 200 },
+                    { "up_to": 299,  "unit_amount_cents": 155 },
+                    { "up_to": 399,  "unit_amount_cents": 147 },
+                    { "up_to": 499,  "unit_amount_cents": 143 },
+                    { "up_to": null, "unit_amount_cents": 122 }
+                ]
+            }
+        },
+        {
+            "Title":"Sample Stickers - Ships from USA",
+            "SKU":"21-2734-CSB-DEMO",
+            "Description":"Location: Finished stickers in US Services Performed: UID collection Lead time: 1 week or less",
+            "Lead Time": "1 week or less",
+            "Minimum Order": 10,
+            "Pricing": {
+                "tiers_mode": "volume",
+                "tiers": [{"up_to": null, "unit_amount_cents": 0}]
+            }
+        },
+        {
+            "Title":"Stickers – UID only – Overseas Factory",
+            "SKU":"Online Tag Builder (21-2734)",
+            "Description":"Location: Finished stickers consigned at China factory Services Performed: UID collection Lead time: 2 weeks or less",
+            "Lead Time": "2 weeks or less",
+            "Minimum Order": 100,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": 499,  "unit_amount_cents": 5 },
+                    { "up_to": 999,  "unit_amount_cents": 2 },
+                    { "up_to": null, "unit_amount_cents": 1 }
+                ]
+            }
+        },
+        {
+            "Title":"Cards - Replacement UID-only - Overseas Factory",
+            "SKU":"Online Tag Builder (21-2735)",
+            "Description":"Location: Pre-finished items consigned at overseas factory Services Performed: UID printing and collection Lead time: 3 weeks or less",
+            "Lead Time": "3 week or less",
+            "Minimum Order": 100,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": 999, "unit_amount_cents": 15 },
+                    { "up_to": 499, "unit_amount_cents": 10 },
+                    { "up_to": null, "unit_amount_cents": 5 }
+                ]
+            }
+        },
+        {
+            "Title":"Stickers – UID only – Ships from USA",
+            "SKU":"21-2734-CSB",
+            "Description":"Location: Finished stickers in US Services Performed: UID collection Lead time: 1 week or less",
+            "Lead Time": "1 week or less",
+            "Minimum Order": 1,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": null, "unit_amount_cents": 20 }
+                ]
+            }
+        },
+        {
+            "Title":"Stickers – Personalized with Student Info – Overseas Factory",
+            "SKU":"Online Tag Builder (21-2776)",
+            "Description":"Location: Stickers made at overseas factory Services Performed: Personalization, printing, UID collection Lead time: 4 weeks or less",
+            "Lead Time": "4 weeks or less",
+            "Minimum Order": 100,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": 499,  "unit_amount_cents": 173 },
+                    { "up_to": 999,  "unit_amount_cents": 114 },
+                    { "up_to": 4999,  "unit_amount_cents": 90 },
+                    { "up_to": null, "unit_amount_cents": 65 }
+                ]
+            }
+        },
+        {
+            "Title":"Sample Cards – Ships from USA",
+            "SKU":"21-2735-CSB-DEMO",
+            "Description":"10 Demo cards Send 10 sample replacement student ID cards. Inventory is consigned to Tagstand US warehouse. Ready to ship.",
+            "Lead Time": "ready to ship",
+            "Minimum Order": 10,
+            "Pricing": {
+                "tiers_mode": "volume",
+                "tiers": [{"up_to": null, "unit_amount_cents": 0}]
+            }
+        },
+        {
+            "Title":"Cards – Replacement UID only – Ships from USA",
+            "SKU":"21-2735-CSB",
+            "Description":"Location: Finished goods at US Services Performed: UID collection Lead time: 1 week or less",
+            "Lead Time": "1 week or less",
+            "Minimum Order": 100,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": 499,  "unit_amount_cents": 20 },
+                    { "up_to": 999,  "unit_amount_cents": 15 },
+                    { "up_to": null, "unit_amount_cents": 10 }
+                ]
+            }
+        },
+        {
+            "Title":"Cards - Personalized with Student Info - Overseas Factory",
+            "SKU":"Online Tag Builder (21-2733)",
+            "Description":"Location: Pre-finished items consigned at overseas factory Services Performed: Personalization, printing, UID collection Lead time: 4 weeks or less",
+            "Lead Time": "4 weeks or less",
+            "Minimum Order": 500,
+            "Pricing":{
+                "tiers_mode": "volume",
+                "tiers": [
+                    { "up_to": 499,  "unit_amount_cents": 20 },
+                    { "up_to": 999,  "unit_amount_cents": 15 },
+                    { "up_to": null, "unit_amount_cents": 10 }
+                ]
+            }
+        }
+    ]
+}
