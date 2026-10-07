@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-09-30T19:35:00.473Z",
+  "updatedAt": "2026-10-07T18:53:51.332Z",
   "createdAt": "2026-09-30T17:45:28.245Z",
   "id": "UgqyUvQvqmuwt8ki",
   "name": "order.submit",
@@ -21,21 +21,21 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2128,
-        -320
+        -2384,
+        -416
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "const b = $json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    created_at: now.toISOString()\n  }\n}];"
+        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\n/*const cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);*/\nconst vt = $('Load Config').all().find(r => r.json.name === 'vtiger_base_url')?.json;\nif (!vt) throw new Error(\"env_config: no row named 'vtiger_base_url'\");\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    created_at: now.toISOString(),\n    vtiger_base_url: vt.value_prd,\n    vtiger_user: vt.user_id_prd,\n    vtiger_password: vt.password_prd\n  }\n}];"
       },
       "id": "57dd16fb-7577-4884-b4ec-7d6a3bd07faa",
       "name": "Build Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1856,
+        -1904,
         -192
       ]
     },
@@ -133,7 +133,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  po_number: ctx.po_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time\n  })),\n  student_count: $('Webhook').first().json.body.students?.length ?? 0,\n  total_amount: '$' + fmt(priced.total_cents)\n} }];"
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  po_number: ctx.po_number,\n  reference_number: ctx.reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time\n  })),\n  //student_count: $('Webhook').first().json.body.students?.length ?? 0,\n  student_count: $('Webhook').first().json.body.lineItems[0].personalizationData?.length ?? 0,\n  total_amount: '$' + fmt(priced.total_cents)\n} }];"
       },
       "id": "9cbf22b8-31b4-472f-9c07-2a6cde46fc31",
       "name": "Build Confirmation",
@@ -212,6 +212,26 @@
           "name": "Google Drive account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "uDUAbEkoO1f4k2zX",
+          "mode": "list",
+          "cachedResultName": "env_config",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/uDUAbEkoO1f4k2zX"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2176,
+        -272
+      ],
+      "id": "b97c4fe4-3dfb-425a-adbd-2b348651049c",
+      "name": "Load Config"
     }
   ],
   "connections": {
@@ -219,7 +239,7 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Load Config",
             "type": "main",
             "index": 0
           }
@@ -309,6 +329,17 @@
           }
         ]
       ]
+    },
+    "Load Config": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -343,9 +374,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "8c322efd-a120-4cfe-853f-4e0573f38c16",
+  "versionId": "ded75be1-bb8b-4ca3-9f26-e2b9846dd8af",
   "activeVersionId": null,
-  "versionCounter": 44,
+  "versionCounter": 156,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
