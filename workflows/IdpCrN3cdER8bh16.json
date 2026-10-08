@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-04T23:30:58.766Z",
+  "updatedAt": "2026-10-08T00:56:03.863Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -11,7 +11,6 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "orders",
-        "authentication": "headerAuth",
         "responseMode": "responseNode",
         "options": {
           "rawBody": false
@@ -22,14 +21,14 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1392,
-        -48
+        -1488,
+        -16
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "const b = $json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    created_at: now.toISOString()\n  }\n}];"
+        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customer_reference_number ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customer_id}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number:customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
@@ -44,9 +43,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "shUWBLVLPo5SUnGh",
+          "value": "7hDIIu8oiTCAo2TY",
           "mode": "list",
-          "cachedResultUrl": "/workflow/shUWBLVLPo5SUnGh",
+          "cachedResultUrl": "/workflow/7hDIIu8oiTCAo2TY",
           "cachedResultName": "order.process"
         },
         "workflowInputs": {
@@ -73,12 +72,11 @@
     {
       "parameters": {
         "conditions": {
-          "combinator": "and",
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
+            "typeValidation": "loose",
+            "version": 3
           },
           "conditions": [
             {
@@ -87,10 +85,13 @@
               "operator": {
                 "type": "boolean",
                 "operation": "true"
-              }
+              },
+              "id": "05e7e099-0c37-492a-ba6e-52d6f2b38847"
             }
-          ]
+          ],
+          "combinator": "and"
         },
+        "looseTypeValidation": true,
         "options": {}
       },
       "id": "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11",
@@ -104,7 +105,7 @@
     },
     {
       "parameters": {
-        "url": "https://YOUR_CRM.od2.vtiger.com/restapi/v1/vtiger/default/query",
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/query",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendQuery": true,
@@ -123,10 +124,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -368,
-        -48
+        -272,
+        -192
       ],
-      "executeOnce": true
+      "executeOnce": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      }
     },
     {
       "parameters": {
@@ -137,8 +144,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -144,
-        -48
+        -48,
+        -192
       ]
     },
     {
@@ -175,8 +182,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        80,
-        -48
+        176,
+        -192
       ]
     },
     {
@@ -216,8 +223,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        304,
-        -48
+        400,
+        -192
       ]
     },
     {
@@ -229,7 +236,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        288,
+        784,
         -128
       ]
     },
@@ -244,7 +251,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        512,
+        1008,
         -128
       ]
     },
@@ -257,7 +264,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        736,
+        1232,
         -128
       ],
       "executeOnce": true
@@ -275,7 +282,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        960,
+        1456,
         -128
       ]
     },
@@ -312,6 +319,26 @@
         -256,
         160
       ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "uDUAbEkoO1f4k2zX",
+          "mode": "list",
+          "cachedResultName": "env_config",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/uDUAbEkoO1f4k2zX"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1328,
+        0
+      ],
+      "id": "951986e2-4f7a-4675-9971-64616557d9d0",
+      "name": "Load Config"
     }
   ],
   "connections": {
@@ -319,7 +346,7 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Load Config",
             "type": "main",
             "index": 0
           }
@@ -449,6 +476,17 @@
           }
         ]
       ]
+    },
+    "Load Config": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -456,7 +494,9 @@
     "binaryMode": "separate"
   },
   "staticData": null,
-  "meta": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
   "nodeGroups": [
     {
       "id": "612f5312-15e0-4325-a814-a82e922051af",
@@ -492,9 +532,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "ed96da3a-4767-428e-9de8-54527306a25f",
+  "versionId": "cbc0069a-8ae7-4b93-8c9d-814828d5b136",
   "activeVersionId": null,
-  "versionCounter": 18,
+  "versionCounter": 32,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],

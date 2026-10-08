@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-07T18:53:51.332Z",
+  "updatedAt": "2026-10-08T00:50:59.088Z",
   "createdAt": "2026-09-30T17:45:28.245Z",
   "id": "UgqyUvQvqmuwt8ki",
   "name": "order.submit",
@@ -21,22 +21,22 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2384,
-        -416
+        -2752,
+        -448
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\n/*const cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);*/\nconst vt = $('Load Config').all().find(r => r.json.name === 'vtiger_base_url')?.json;\nif (!vt) throw new Error(\"env_config: no row named 'vtiger_base_url'\");\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    created_at: now.toISOString(),\n    vtiger_base_url: vt.value_prd,\n    vtiger_user: vt.user_id_prd,\n    vtiger_password: vt.password_prd\n  }\n}];"
+        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customer_reference_number ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customer_id}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number:customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n  }\n}];"
       },
       "id": "57dd16fb-7577-4884-b4ec-7d6a3bd07faa",
       "name": "Build Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1904,
-        -192
+        -2144,
+        -448
       ]
     },
     {
@@ -65,8 +65,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        -1632,
-        -192
+        -1872,
+        -448
       ]
     },
     {
@@ -99,8 +99,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1408,
-        -192
+        -1648,
+        -448
       ]
     },
     {
@@ -112,8 +112,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1056,
-        -96
+        -656,
+        -160
       ]
     },
     {
@@ -127,8 +127,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        -880,
-        -96
+        -480,
+        -160
       ]
     },
     {
@@ -140,8 +140,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -576,
-        -96
+        -176,
+        -160
       ],
       "executeOnce": true
     },
@@ -158,8 +158,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -384,
-        -96
+        16,
+        -160
       ]
     },
     {
@@ -175,8 +175,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -944,
-        -416
+        -1152,
+        272
       ]
     },
     {
@@ -201,8 +201,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -736,
-        -96
+        -336,
+        -160
       ],
       "id": "e34fba3b-8504-4d70-879a-9f12e4123047",
       "name": "Upload file",
@@ -227,11 +227,129 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -2176,
-        -272
+        -2480,
+        -448
       ],
       "id": "b97c4fe4-3dfb-425a-adbd-2b348651049c",
       "name": "Load Config"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/query",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ \"SELECT id, productcode FROM Products WHERE productcode IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.sku + \"'\").join(\",\") + \");\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b03521b-949d-4852-9ce4-40bbc537bc10",
+      "name": "Lookup Products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1104,
+        -816
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// paste bui// ---- Pilot constants (move to customer config later) ----\nconst VTIGER_ACCOUNT_ID = '11x000';   // Account webservice id (moduleIdxRecordId)\nconst ASSIGNED_USER_ID  = '19x1';     // from GET /me\nconst ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst found  = $('Lookup Products').first().json.result ?? [];\n\nconst idBySku = new Map(found.map(p => [p.productcode, p.id]));\nconst missing = priced.line_items.filter(l => !idBySku.has(l.sku)).map(l => l.sku);\nif (missing.length) throw new Error(`SKUs missing in VTiger Products: ${missing.join(', ')}`);\n\nconst element = {\n  subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  account_id: VTIGER_ACCOUNT_ID,\n  assigned_user_id: ASSIGNED_USER_ID,\n  sostatus: 'Created',\n  purchaseorder: ctx.po_number ?? '',\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idBySku.get(l.sku),\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\nreturn [{ json: { element: JSON.stringify(element) } }];ld-salesorder code here"
+      },
+      "id": "d38be307-84bc-4feb-9da6-f64b8be24aa8",
+      "name": "Build SalesOrder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        -816
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_CRM.od2.vtiger.com/restapi/v1/vtiger/default/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "elementType",
+              "value": "SalesOrder"
+            },
+            {
+              "name": "element",
+              "value": "={{ $json.element }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "db5a8fa8-32c4-4894-81dd-b0da85c839e6",
+      "name": "Create SalesOrder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -656,
+        -816
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ $json.body.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2d00282d-4106-4fe2-8023-9726e8ca99a5",
+      "name": "SO Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -432,
+        -816
+      ]
     }
   ],
   "connections": {
@@ -340,6 +458,39 @@
           }
         ]
       ]
+    },
+    "Lookup Products": {
+      "main": [
+        [
+          {
+            "node": "Build SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build SalesOrder": {
+      "main": [
+        [
+          {
+            "node": "Create SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create SalesOrder": {
+      "main": [
+        [
+          {
+            "node": "SO Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -371,12 +522,23 @@
         "4c97c62b-7a76-410b-bccf-0e5752c69dff",
         "e34fba3b-8504-4d70-879a-9f12e4123047"
       ]
+    },
+    {
+      "id": "08d0b7b7-7968-4050-ab2b-45cdb4bdc65f",
+      "name": "Create CRM sales order",
+      "nodeIds": [
+        "8b03521b-949d-4852-9ce4-40bbc537bc10",
+        "d38be307-84bc-4feb-9da6-f64b8be24aa8",
+        "db5a8fa8-32c4-4894-81dd-b0da85c839e6",
+        "2d00282d-4106-4fe2-8023-9726e8ca99a5"
+      ],
+      "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
     }
   ],
   "pinData": {},
-  "versionId": "ded75be1-bb8b-4ca3-9f26-e2b9846dd8af",
+  "versionId": "69c5cfd9-e4c3-47a2-90aa-f2cb1e750b73",
   "activeVersionId": null,
-  "versionCounter": 156,
+  "versionCounter": 209,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
