@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-08T00:56:03.863Z",
+  "updatedAt": "2026-10-09T17:58:45.973Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -236,8 +236,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        784,
-        -128
+        1408,
+        -112
       ]
     },
     {
@@ -251,8 +251,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        1008,
-        -128
+        1632,
+        -112
       ]
     },
     {
@@ -264,8 +264,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1232,
-        -128
+        1856,
+        -112
       ],
       "executeOnce": true
     },
@@ -282,8 +282,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1456,
-        -128
+        2080,
+        -112
       ]
     },
     {
@@ -299,8 +299,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        528,
-        208
+        816,
+        240
       ]
     },
     {
@@ -339,6 +339,274 @@
       ],
       "id": "951986e2-4f7a-4675-9971-64616557d9d0",
       "name": "Load Config"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "customers"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ $('Build Context').item.json.customer_id }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "583ee8a9-5301-430f-8ee8-7dbb9397b434",
+      "name": "Get Stripe Customer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        -96
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f68daa8f-464c-47f1-9aa4-f79313398b92",
+      "name": "Has Card on File?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        992,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\":\"payment_failed\",\"errors\":[\"No payment method on file for this customer\"]}",
+        "options": {
+          "responseCode": 402
+        }
+      },
+      "id": "2e583d71-5e9d-489b-9fd3-ee3a0f34bf86",
+      "name": "Respond No Card",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1216,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/payment_intents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "stripeApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $('Build Context').item.json.idem_key }}:payment"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "amount",
+              "value": "={{ $('Process Order').item.json.total_cents }}"
+            },
+            {
+              "name": "currency",
+              "value": "usd"
+            },
+            {
+              "name": "customer",
+              "value": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}"
+            },
+            {
+              "name": "payment_method",
+              "value": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}"
+            },
+            {
+              "name": "off_session",
+              "value": "true"
+            },
+            {
+              "name": "confirm",
+              "value": "true"
+            },
+            {
+              "name": "capture_method",
+              "value": "automatic"
+            },
+            {
+              "name": "description",
+              "value": "=Order {{ $('Build Context').item.json.order_id }}"
+            },
+            {
+              "name": "metadata[order_id]",
+              "value": "={{ $('Build Context').item.json.order_id }}"
+            },
+            {
+              "name": "metadata[customer_id]",
+              "value": "={{ $('Build Context').item.json.customer_id }}"
+            },
+            {
+              "name": "metadata[customer_reference_number]",
+              "value": "={{ $('Build Context').item.json.customer_reference_number }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "046115d0-ccf8-4ed0-afc8-7dc83ba84095",
+      "name": "Create Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1216,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ [\"succeeded\", \"processing\"] }}",
+              "rightValue": "={{ $json.body.status }}",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a51bc05f-0e11-4f24-b6a4-89351240d6d3",
+      "name": "Payment OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1440,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/update",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "elementType",
+              "value": "SalesOrder"
+            },
+            {
+              "name": "element",
+              "value": "={{ JSON.stringify({ id: $('Create SalesOrder').item.json.body.result.id, sostatus: \"Approved\" }) }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "8197fa72-d286-4d09-87ef-ba257f65a0f6",
+      "name": "Mark SO Paid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1856,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'payment_failed', errors: [ $json.body?.error?.message ?? 'Payment failed' ], decline_code: $json.body?.error?.decline_code ?? null } }}",
+        "options": {
+          "responseCode": 402
+        }
+      },
+      "id": "f4871f25-78ce-48d0-8bce-0eb4272dc30f",
+      "name": "Respond Payment Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1824,
+        384
+      ]
     }
   ],
   "connections": {
@@ -430,7 +698,7 @@
       "main": [
         [
           {
-            "node": "Students",
+            "node": "Get Stripe Customer",
             "type": "main",
             "index": 0
           }
@@ -487,6 +755,75 @@
           }
         ]
       ]
+    },
+    "Get Stripe Customer": {
+      "main": [
+        [
+          {
+            "node": "Has Card on File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Card on File?": {
+      "main": [
+        [
+          {
+            "node": "Create Payment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond No Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Payment": {
+      "main": [
+        [
+          {
+            "node": "Payment OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment OK?": {
+      "main": [
+        [
+          {
+            "node": "Mark SO Paid",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark SO Paid": {
+      "main": [
+        [
+          {
+            "node": "Students",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -529,12 +866,26 @@
         "0935027a-755e-4e09-bd3f-5c5cfb20071f"
       ],
       "description": "For valid orders: builds the student roster file and returns a 201 confirmation to the caller"
+    },
+    {
+      "id": "63a93a3d-bb3b-409d-8f55-213b3667c576",
+      "name": "Charge card on file",
+      "nodeIds": [
+        "583ee8a9-5301-430f-8ee8-7dbb9397b434",
+        "f68daa8f-464c-47f1-9aa4-f79313398b92",
+        "2e583d71-5e9d-489b-9fd3-ee3a0f34bf86",
+        "046115d0-ccf8-4ed0-afc8-7dc83ba84095",
+        "a51bc05f-0e11-4f24-b6a4-89351240d6d3",
+        "f4871f25-78ce-48d0-8bce-0eb4272dc30f",
+        "8197fa72-d286-4d09-87ef-ba257f65a0f6"
+      ],
+      "description": "After the held sales order exists: charges the saved card, marks the order paid, or returns 402 and leaves it on hold"
     }
   ],
   "pinData": {},
-  "versionId": "cbc0069a-8ae7-4b93-8c9d-814828d5b136",
+  "versionId": "aca5fe16-5690-4c4c-b845-1fcc8ebe60bc",
   "activeVersionId": null,
-  "versionCounter": 32,
+  "versionCounter": 51,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],

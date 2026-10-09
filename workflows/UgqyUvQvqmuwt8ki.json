@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-08T00:50:59.088Z",
+  "updatedAt": "2026-10-08T01:01:45.323Z",
   "createdAt": "2026-09-30T17:45:28.245Z",
   "id": "UgqyUvQvqmuwt8ki",
   "name": "order.submit",
@@ -257,7 +257,13 @@
         -1104,
         -816
       ],
-      "executeOnce": true
+      "executeOnce": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      }
     },
     {
       "parameters": {
@@ -536,9 +542,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "69c5cfd9-e4c3-47a2-90aa-f2cb1e750b73",
+  "versionId": "2969f74b-c86b-4f21-8093-4b5bd24122a1",
   "activeVersionId": null,
-  "versionCounter": 209,
+  "versionCounter": 210,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
