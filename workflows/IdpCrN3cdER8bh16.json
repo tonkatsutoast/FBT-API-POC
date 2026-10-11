@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-09T17:58:45.973Z",
+  "updatedAt": "2026-10-10T00:41:13.779Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -21,14 +21,14 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -1488,
-        -16
+        -2064,
+        -64
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customer_reference_number ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customer_id}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number:customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n  }\n}];"
+        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customer_reference_number ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customer_id}|${customer_ref}`;\nconst cust = $('Lookup Customer').first().json;\nif(!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number:customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    customer_id: cust.customer_id,\n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
@@ -137,7 +137,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// paste bui// ---- Pilot constants (move to customer config later) ----\nconst VTIGER_ACCOUNT_ID = '11x000';   // Account webservice id (moduleIdxRecordId)\nconst ASSIGNED_USER_ID  = '19x1';     // from GET /me\nconst ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst found  = $('Lookup Products').first().json.result ?? [];\n\nconst idBySku = new Map(found.map(p => [p.productcode, p.id]));\nconst missing = priced.line_items.filter(l => !idBySku.has(l.sku)).map(l => l.sku);\nif (missing.length) throw new Error(`SKUs missing in VTiger Products: ${missing.join(', ')}`);\n\nconst element = {\n  subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  account_id: VTIGER_ACCOUNT_ID,\n  assigned_user_id: ASSIGNED_USER_ID,\n  sostatus: 'Created',\n  purchaseorder: ctx.po_number ?? '',\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idBySku.get(l.sku),\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\nreturn [{ json: { element: JSON.stringify(element) } }];ld-salesorder code here"
+        "jsCode": "// paste bui// ---- Pilot constants (move to customer config later) ----\nconst VTIGER_ACCOUNT_ID = '11x000';   // Account webservice id (moduleIdxRecordId)\nconst ASSIGNED_USER_ID  = '19x8';     // from GET /me\nconst ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst found  = $('Lookup Products').first().json.result ?? [];\n\nconst idBySku = new Map(found.map(p => [p.productcode, p.id]));\nconst missing = priced.line_items.filter(l => !idBySku.has(l.sku)).map(l => l.sku);\nif (missing.length) throw new Error(`SKUs missing in VTiger Products: ${missing.join(', ')}`);\n\nconst element = {\n  subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  account_id: VTIGER_ACCOUNT_ID,\n  assigned_user_id: ASSIGNED_USER_ID,\n  sostatus: 'Created',\n  purchaseorder: ctx.po_number ?? '',\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idBySku.get(l.sku),\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\nreturn [{ json: { element: JSON.stringify(element) } }];ld-salesorder code here"
       },
       "id": "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
       "name": "Build SalesOrder",
@@ -151,7 +151,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://YOUR_CRM.od2.vtiger.com/restapi/v1/vtiger/default/create",
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/create",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendBody": true,
@@ -184,7 +184,13 @@
       "position": [
         176,
         -192
-      ]
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      }
     },
     {
       "parameters": {
@@ -329,13 +335,14 @@
           "mode": "list",
           "cachedResultName": "env_config",
           "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/uDUAbEkoO1f4k2zX"
-        }
+        },
+        "returnAll": true
       },
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -1328,
-        0
+        -1376,
+        -32
       ],
       "id": "951986e2-4f7a-4675-9971-64616557d9d0",
       "name": "Load Config"
@@ -607,6 +614,30 @@
         1824,
         384
       ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "R5qrBqVvgf8IB7uS",
+          "mode": "list",
+          "cachedResultName": "api_customers",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
+        },
+        "filters": {
+          "conditions": []
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1616,
+        -160
+      ],
+      "id": "9cc5d522-1d7c-4e99-86be-482235d9b086",
+      "name": "Lookup Customer"
     }
   ],
   "connections": {
@@ -614,7 +645,7 @@
       "main": [
         [
           {
-            "node": "Load Config",
+            "node": "Lookup Customer",
             "type": "main",
             "index": 0
           }
@@ -824,6 +855,17 @@
           }
         ]
       ]
+    },
+    "Lookup Customer": {
+      "main": [
+        [
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -880,12 +922,20 @@
         "8197fa72-d286-4d09-87ef-ba257f65a0f6"
       ],
       "description": "After the held sales order exists: charges the saved card, marks the order paid, or returns 402 and leaves it on hold"
+    },
+    {
+      "id": "91a91d0f-6a19-42dc-8e82-02d6ff42cb38",
+      "name": "load context from data tables",
+      "nodeIds": [
+        "951986e2-4f7a-4675-9971-64616557d9d0",
+        "9cc5d522-1d7c-4e99-86be-482235d9b086"
+      ]
     }
   ],
   "pinData": {},
-  "versionId": "aca5fe16-5690-4c4c-b845-1fcc8ebe60bc",
+  "versionId": "ee9cbd51-7078-4f85-91fb-53865c0c72b8",
   "activeVersionId": null,
-  "versionCounter": 51,
+  "versionCounter": 122,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
