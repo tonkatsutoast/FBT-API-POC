@@ -35,7 +35,7 @@
           "conditions": [
             {
               "keyName": "customer_id",
-              "keyValue": "={{ Number($json.query.customer_id) }}"
+              "keyValue": "={{ $json.query.customer_id }}"
             }
           ]
         },
@@ -54,7 +54,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"customer_id\": {{ $json.customer_id }},\n  \"products\": {{ $json.catalog_json }}\n}",
+        "responseBody": "={\n  \"customer_id\": \"{{ $json.customer_id }}\",\n  \"products\": {{ $json.catalog_json }}\n}",
         "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -99,9 +99,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "09c7b079-8042-41e8-b7e5-3c839bcb2818",
+  "versionId": "943c0db1-c477-4010-bf51-664cb6ad3a7a",
   "activeVersionId": null,
-  "versionCounter": 70,
+  "versionCounter": 71,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],

@@ -38,7 +38,7 @@
           "conditions": [
             {
               "keyName": "customer_id",
-              "keyValue": "={{ Number($json.body.customer_id) }}"
+              "keyValue": "={{ $json.body.customer_id }}"
             }
           ]
         },
@@ -46,7 +46,7 @@
           "mappingMode": "defineBelow",
           "value": {
             "catalog_json": "={{ JSON.stringify($json.body.products) }}",
-            "customer_id": "={{ Number($json.body.customer_id) }}"
+            "customer_id": "={{ $json.body.customer_id }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -66,7 +66,7 @@
               "required": false,
               "defaultMatch": false,
               "display": true,
-              "type": "number",
+              "type": "string",
               "readOnly": false,
               "removed": false
             }
@@ -107,9 +107,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "5625b981-b7fe-4cc5-9ea2-f0745ac9339b",
+  "versionId": "7d3c5414-140f-411a-b723-469bbebf6802",
   "activeVersionId": null,
-  "versionCounter": 34,
+  "versionCounter": 35,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
