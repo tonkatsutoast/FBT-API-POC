@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-01T20:35:52.461Z",
+  "updatedAt": "2026-10-14T22:15:10.310Z",
   "createdAt": "2026-10-01T19:39:00.876Z",
   "id": "duvuYNULUxzRD1KU",
   "name": "catalog.upsert",
@@ -38,7 +38,7 @@
           "conditions": [
             {
               "keyName": "customer_id",
-              "keyValue": "={{ $json.body.customer_id }}"
+              "keyValue": "={{ $json.body.customerId }}"
             }
           ]
         },
@@ -46,7 +46,7 @@
           "mappingMode": "defineBelow",
           "value": {
             "catalog_json": "={{ JSON.stringify($json.body.products) }}",
-            "customer_id": "={{ $json.body.customer_id }}"
+            "customer_id": "={{ $json.body.customerId }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -107,9 +107,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "7d3c5414-140f-411a-b723-469bbebf6802",
+  "versionId": "aa44d6fb-da67-48bc-9b14-3d6fec715469",
   "activeVersionId": null,
-  "versionCounter": 35,
+  "versionCounter": 38,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],

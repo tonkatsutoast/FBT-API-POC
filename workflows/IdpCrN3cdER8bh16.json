@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-11T03:08:13.000Z",
+  "updatedAt": "2026-10-15T03:16:23.000Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -28,7 +28,7 @@
     },
     {
       "parameters": {
-        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customer_reference_number ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customer_id}|${customer_ref}`;\nconst cust = $('Lookup Customer').first().json;\nif(!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customer_id, po_number, line_items, students\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number:customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    customer_id: cust.customer_id,\n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id\n  }\n}];"
+        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customerId}|${customer_ref}`;\n// No row means the caller sent an unknown/inactive customerId; fall back to {}\n// so the check below reports it instead of throwing on a missing item.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,\n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
@@ -113,11 +113,19 @@
           "parameters": [
             {
               "name": "query",
-              "value": "={{ \"SELECT id, productcode FROM Products WHERE productcode IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.sku + \"'\").join(\",\") + \");\" }}"
+              "value": "={{ \"SELECT id, productname FROM Products WHERE productname IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.product_number + \"'\").join(\",\") + \");\" }}"
             }
           ]
         },
-        "options": {}
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "071b8519-d437-4c31-9798-6f1c18632f42",
       "name": "Lookup Products",
@@ -137,14 +145,14 @@
     },
     {
       "parameters": {
-        "jsCode": "// paste bui// ---- Pilot constants (move to customer config later) ----\nconst VTIGER_ACCOUNT_ID = '11x000';   // Account webservice id (moduleIdxRecordId)\nconst ASSIGNED_USER_ID  = '19x8';     // from GET /me\nconst ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst found  = $('Lookup Products').first().json.result ?? [];\n\nconst idBySku = new Map(found.map(p => [p.productcode, p.id]));\nconst missing = priced.line_items.filter(l => !idBySku.has(l.sku)).map(l => l.sku);\nif (missing.length) throw new Error(`SKUs missing in VTiger Products: ${missing.join(', ')}`);\n\nconst element = {\n  subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  account_id: VTIGER_ACCOUNT_ID,\n  assigned_user_id: ASSIGNED_USER_ID,\n  sostatus: 'Created',\n  purchaseorder: ctx.po_number ?? '',\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idBySku.get(l.sku),\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\nreturn [{ json: { element: JSON.stringify(element) } }];ld-salesorder code here"
+        "jsCode": "// ---- Pilot constants (move to customer config later) ----\nconst ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst lookup = $('Validate Product Lookup').first().json;\n\n// CRM identity comes from configuration, not from constants in this node:\n// the account from the customer's api_customers row, the owner from env_config.\nif (!ctx.vtiger_account_id) {\n  throw new Error(`Customer ${ctx.customer_id} has no vtiger_account_id configured`);\n}\nif (!ctx.vtiger_assigned_user_id) {\n  throw new Error('env_config.vtiger_assigned_user_id is not set');\n}\n\n// Product Number -> VTiger Products record id, asserted complete upstream.\nconst idByProductNumber = lookup.by_product_number ?? {};\n\n// Invariant: every line item must carry a CRM product id. This is only\n// reachable if the lookup validation is bypassed, so fail loudly rather than\n// create a sales order whose lines reference no product.\nconst unresolved = priced.line_items\n  .filter(l => !idByProductNumber[String(l.product_number).trim()])\n  .map(l => `${l.sku} (Product Number ${l.product_number})`);\nif (unresolved.length) {\n  throw new Error(`No VTiger product id resolved for: ${unresolved.join('; ')}`);\n}\n\nconst element = {\n  subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  account_id: ctx.vtiger_account_id,\n  assigned_user_id: ctx.vtiger_assigned_user_id,\n  sostatus: 'Created',\n  purchaseorder: ctx.po_number ?? '',\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idByProductNumber[String(l.product_number).trim()],\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\n// Serialisation to a JSON string happens in Create SalesOrder, at the point\n// it is needed: VTiger wants `element` as a string in a form-urlencoded body.\n// Keeping it an object here means the node's output stays readable.\nreturn [{ json: { element } }];"
       },
       "id": "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
       "name": "Build SalesOrder",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -48,
+        400,
         -192
       ]
     },
@@ -164,7 +172,7 @@
             },
             {
               "name": "element",
-              "value": "={{ $json.element }}"
+              "value": "={{ JSON.stringify($json.element) }}"
             }
           ]
         },
@@ -172,7 +180,8 @@
           "response": {
             "response": {
               "fullResponse": true,
-              "neverError": true
+              "neverError": true,
+              "responseFormat": "json"
             }
           }
         }
@@ -182,7 +191,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        176,
+        624,
         -192
       ],
       "credentials": {
@@ -229,7 +238,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        400,
+        848,
         -192
       ]
     },
@@ -242,7 +251,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1408,
+        1856,
         -112
       ]
     },
@@ -257,7 +266,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        1632,
+        2080,
         -112
       ]
     },
@@ -270,7 +279,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
+        2304,
         -112
       ],
       "executeOnce": true
@@ -288,7 +297,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2080,
+        2528,
         -112
       ]
     },
@@ -352,8 +361,10 @@
         "operation": "get",
         "dataTableId": {
           "__rl": true,
-          "mode": "name",
-          "value": "customers"
+          "value": "R5qrBqVvgf8IB7uS",
+          "mode": "list",
+          "cachedResultName": "api_customers",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
         },
         "matchType": "allConditions",
         "filters": {
@@ -371,7 +382,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        768,
+        1216,
         -96
       ],
       "alwaysOutputData": true
@@ -415,7 +426,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        992,
+        1440,
         -96
       ]
     },
@@ -432,7 +443,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1216,
+        1664,
         288
       ]
     },
@@ -515,7 +526,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1216,
+        1664,
         96
       ]
     },
@@ -557,7 +568,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1440,
+        1888,
         96
       ]
     },
@@ -594,7 +605,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1856,
+        2304,
         0
       ]
     },
@@ -611,7 +622,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1824,
+        2272,
         384
       ]
     },
@@ -626,9 +637,15 @@
           "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
         },
         "filters": {
-          "conditions": []
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ String($json.body.customerId) }}"
+            }
+          ]
         },
-        "returnAll": true
+        "matchType": "allConditions",
+        "limit": 1
       },
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
@@ -637,7 +654,125 @@
         -160
       ],
       "id": "9cc5d522-1d7c-4e99-86be-482235d9b086",
-      "name": "Lookup Customer"
+      "name": "Lookup Customer",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate the VTiger Products query before anything is built from it.\n//\n// VTiger's query API is quietly tolerant in three separate ways, none of which\n// is an error at the transport level:\n//   * an unmatched lookup answers HTTP 200 with {\"success\": true, \"result\": []}\n//   * a column that does not exist comes back as \"\" instead of failing\n//   * responses are served as text/html, so the HTTP node may hand back the raw\n//     text under `data` rather than a parsed object under `body`\n// Every one of those would silently produce a sales order with no product on\n// its lines, so nothing downstream may proceed on an unverified lookup.\nconst raw = $input.first().json;\nconst wanted = [...new Set(\n  $('Process Order').first().json.line_items.map(l => String(l.product_number).trim())\n)];\n\nconst fail = (reason) => [{ json: { ok: false, lookup_error: reason } }];\n\n// Lookup Products requests responseFormat=json; fall back to parsing raw `data`\n// so that a node copied from elsewhere still fails loudly instead of silently.\nlet payload = raw.body !== undefined ? raw.body : raw.data;\nif (typeof payload === 'string') {\n  try {\n    payload = payload.trim() === '' ? null : JSON.parse(payload);\n  } catch {\n    payload = null;\n  }\n}\n\nif (raw.statusCode !== undefined && raw.statusCode !== 200) {\n  return fail(`VTiger Products query failed with HTTP ${raw.statusCode}${raw.statusMessage ? ' ' + raw.statusMessage : ''}`);\n}\nif (payload === null || typeof payload !== 'object') {\n  return fail('VTiger Products query returned a response that is not JSON');\n}\nif (payload.success !== true) {\n  return fail(`VTiger Products query was rejected: ${JSON.stringify(payload.error ?? payload)}`);\n}\nif (!Array.isArray(payload.result)) {\n  return fail('VTiger Products query returned no result array');\n}\nif (payload.result.length === 0) {\n  return fail(`VTiger has no Products matching: ${wanted.join(', ')}`);\n}\nif (payload.result.some(r => r.productname === undefined || r.productname === null)) {\n  return fail('VTiger response is missing the productname column');\n}\n\nconst byProductNumber = {};\nfor (const r of payload.result) {\n  const name = String(r.productname).trim();\n  if (name && r.id) byProductNumber[name] = r.id;\n}\n\nconst missing = wanted.filter(n => !byProductNumber[n]);\nif (missing.length) {\n  return fail(`Product Number(s) not found in VTiger Products: ${missing.join(', ')}`);\n}\n\nreturn [{ json: { ok: true, by_product_number: byProductNumber, matched_count: payload.result.length } }];"
+      },
+      "id": "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
+      "name": "Validate Product Lookup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d3088ddc-13a4-484a-a90b-fff70710e78a",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "9415cbde-46f2-421c-a503-952fc08c7cba",
+      "name": "Lookup OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        176,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', errors: [ $json.lookup_error ?? 'Product lookup failed' ] } }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "4f42a8c4-6d8a-4c51-889a-9e576a2e1859",
+      "name": "Respond Lookup Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        400,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3d2e70a1-2efc-44d8-8e9e-128e22cfe831",
+              "leftValue": "={{ $json.customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "743c93b6-8ca7-4c7a-ae04-ab45c6731d7d",
+      "name": "Customer Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1616,
+        -336
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'rejected', errors: [ 'Customer ' + ($('Webhook').first().json.body.customerId ?? '(missing)') + ' is not known or is inactive' ] } }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "0591f887-2d82-4b79-bb96-33de06d681ad",
+      "name": "Respond Unknown Customer",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1408,
+        -336
+      ]
     }
   ],
   "connections": {
@@ -696,7 +831,7 @@
       "main": [
         [
           {
-            "node": "Build SalesOrder",
+            "node": "Validate Product Lookup",
             "type": "main",
             "index": 0
           }
@@ -856,11 +991,58 @@
         ]
       ]
     },
+    "Validate Product Lookup": {
+      "main": [
+        [
+          {
+            "node": "Lookup OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup OK?": {
+      "main": [
+        [
+          {
+            "node": "Build SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Lookup Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Lookup Customer": {
       "main": [
         [
           {
+            "node": "Customer Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Found?": {
+      "main": [
+        [
+          {
             "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unknown Customer",
             "type": "main",
             "index": 0
           }
@@ -892,9 +1074,12 @@
       "name": "Create CRM sales order",
       "nodeIds": [
         "071b8519-d437-4c31-9798-6f1c18632f42",
+        "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
+        "9415cbde-46f2-421c-a503-952fc08c7cba",
         "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
         "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
-        "f0c12b63-ff42-449d-92f8-e59ff6f99007"
+        "f0c12b63-ff42-449d-92f8-e59ff6f99007",
+        "4f42a8c4-6d8a-4c51-889a-9e576a2e1859"
       ],
       "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
     },
@@ -927,15 +1112,17 @@
       "id": "91a91d0f-6a19-42dc-8e82-02d6ff42cb38",
       "name": "load context from data tables",
       "nodeIds": [
+        "9cc5d522-1d7c-4e99-86be-482235d9b086",
+        "743c93b6-8ca7-4c7a-ae04-ab45c6731d7d",
         "951986e2-4f7a-4675-9971-64616557d9d0",
-        "9cc5d522-1d7c-4e99-86be-482235d9b086"
+        "0591f887-2d82-4b79-bb96-33de06d681ad"
       ]
     }
   ],
   "pinData": {},
-  "versionId": "5ad57284-ad51-45f4-9be1-815ea23729a1",
-  "activeVersionId": "5ad57284-ad51-45f4-9be1-815ea23729a1",
-  "versionCounter": 122,
+  "versionId": "e8bd3852-ddfa-4525-8154-702cd4205104",
+  "activeVersionId": "e8bd3852-ddfa-4525-8154-702cd4205104",
+  "versionCounter": 134,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],

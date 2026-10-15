@@ -1,0 +1,218 @@
+{
+  "customerId": 2,
+  "products": [
+    {
+      "title": "Cards \u2013 Personalized \u2013 Ships from USA",
+      "sku": "21-2735-CSB-PRINT",
+      "description": "Location: USA Service Bureau Services Performed: Personalization printing, UID collection lead time: 2 weeks or less",
+      "leadTime": "2 weeks or less",
+      "minimumOrder": 100,
+      "productNumber": "21-2735",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": 199,
+            "unitAmountCents": 180
+          },
+          {
+            "upTo": 299,
+            "unitAmountCents": 155
+          },
+          {
+            "upTo": 399,
+            "unitAmountCents": 147
+          },
+          {
+            "upTo": 499,
+            "unitAmountCents": 143
+          },
+          {
+            "upTo": null,
+            "unitAmountCents": 122
+          }
+        ]
+      }
+    },
+    {
+      "title": "Sample Stickers - Ships from USA",
+      "sku": "21-2734-CSB-DEMO",
+      "description": "Location: Finished stickers in US Services Performed: UID collection lead time: 1 week or less",
+      "leadTime": "1 week or less",
+      "minimumOrder": 10,
+      "productNumber": "21-2734",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": null,
+            "unitAmountCents": 0
+          }
+        ]
+      }
+    },
+    {
+      "title": "Stickers \u2013 UID only \u2013 Overseas Factory",
+      "sku": "Online Tag Builder (21-2734)",
+      "description": "Location: Finished stickers consigned at China factory Services Performed: UID collection lead time: 2 weeks or less",
+      "leadTime": "2 weeks or less",
+      "minimumOrder": 100,
+      "productNumber": "21-2734",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": 499,
+            "unitAmountCents": 5
+          },
+          {
+            "upTo": 999,
+            "unitAmountCents": 2
+          },
+          {
+            "upTo": null,
+            "unitAmountCents": 1
+          }
+        ]
+      }
+    },
+    {
+      "title": "Cards - Replacement UID-only - Overseas Factory",
+      "sku": "Online Tag Builder (21-2735)",
+      "description": "Location: Pre-finished items consigned at overseas factory Services Performed: UID printing and collection lead time: 3 weeks or less",
+      "leadTime": "3 week or less",
+      "minimumOrder": 100,
+      "productNumber": "21-2735",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": 499,
+            "unitAmountCents": 15
+          },
+          {
+            "upTo": 999,
+            "unitAmountCents": 10
+          },
+          {
+            "upTo": null,
+            "unitAmountCents": 5
+          }
+        ]
+      }
+    },
+    {
+      "title": "Stickers \u2013 UID only \u2013 Ships from USA",
+      "sku": "21-2734-CSB",
+      "description": "Location: Finished stickers in US Services Performed: UID collection lead time: 1 week or less",
+      "leadTime": "1 week or less",
+      "minimumOrder": 1,
+      "productNumber": "21-2734",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": null,
+            "unitAmountCents": 20
+          }
+        ]
+      }
+    },
+    {
+      "title": "Stickers \u2013 Personalized with Student Info \u2013 Overseas Factory",
+      "sku": "Online Tag Builder (21-2776)",
+      "description": "Location: Stickers made at overseas factory Services Performed: Personalization, printing, UID collection lead time: 4 weeks or less",
+      "leadTime": "4 weeks or less",
+      "minimumOrder": 100,
+      "productNumber": "21-2776",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": 499,
+            "unitAmountCents": 173
+          },
+          {
+            "upTo": 999,
+            "unitAmountCents": 114
+          },
+          {
+            "upTo": 4999,
+            "unitAmountCents": 90
+          },
+          {
+            "upTo": null,
+            "unitAmountCents": 65
+          }
+        ]
+      }
+    },
+    {
+      "title": "Sample Cards \u2013 Ships from USA",
+      "sku": "21-2735-CSB-DEMO",
+      "description": "10 Demo cards Send 10 sample replacement student ID cards. Inventory is consigned to Tagstand US warehouse. Ready to ship.",
+      "leadTime": "ready to ship",
+      "minimumOrder": 10,
+      "productNumber": "21-2735",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": null,
+            "unitAmountCents": 0
+          }
+        ]
+      }
+    },
+    {
+      "title": "Cards \u2013 Replacement UID only \u2013 Ships from USA",
+      "sku": "21-2735-CSB",
+      "description": "Location: Finished goods at US Services Performed: UID collection lead time: 1 week or less",
+      "leadTime": "1 week or less",
+      "minimumOrder": 100,
+      "productNumber": "21-2735",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": 499,
+            "unitAmountCents": 20
+          },
+          {
+            "upTo": 999,
+            "unitAmountCents": 15
+          },
+          {
+            "upTo": null,
+            "unitAmountCents": 10
+          }
+        ]
+      }
+    },
+    {
+      "title": "Cards - Personalized with Student Info - Overseas Factory",
+      "sku": "Online Tag Builder (21-2733)",
+      "description": "Location: Pre-finished items consigned at overseas factory Services Performed: Personalization, printing, UID collection lead time: 4 weeks or less",
+      "leadTime": "4 weeks or less",
+      "minimumOrder": 500,
+      "productNumber": "21-2733",
+      "pricing": {
+        "tiersMode": "volume",
+        "tiers": [
+          {
+            "upTo": 499,
+            "unitAmountCents": 20
+          },
+          {
+            "upTo": 999,
+            "unitAmountCents": 15
+          },
+          {
+            "upTo": null,
+            "unitAmountCents": 10
+          }
+        ]
+      }
+    }
+  ]
+}

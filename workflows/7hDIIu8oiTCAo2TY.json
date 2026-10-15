@@ -1,10 +1,10 @@
 {
-  "updatedAt": "2026-09-30T18:55:23.581Z",
+  "updatedAt": "2026-10-15T00:45:03.000Z",
   "createdAt": "2026-09-30T17:45:57.027Z",
   "id": "7hDIIu8oiTCAo2TY",
   "name": "order.process",
   "description": null,
-  "active": false,
+  "active": true,
   "isArchived": false,
   "nodes": [
     {
@@ -49,7 +49,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('When Executed by Another Workflow').first().json;\nconst row = $input.first().json;\n\nif (!row?.catalog_json) {\n  return [{ json: { valid: false, errors: [`No catalog for customer ${input.customer_id}`] } }];\n}\n\nconst bySku = new Map(JSON.parse(row.catalog_json).map(p => [p.SKU, p]));\nconst errors = [];\n\n// Consolidate duplicate SKUs so volume tiers apply to the true total\nconst qtyBySku = new Map();\nfor (const [i, li] of (input.lineItems ?? []).entries()) {\n  if (!bySku.has(li.sku)) { errors.push(`Line ${i + 1}: unknown SKU '${li.sku}'`); continue; }\n  if (!Number.isInteger(li.quantity) || li.quantity < 1) { errors.push(`Line ${i + 1}: invalid quantity '${li.quantity}'`); continue; }\n  qtyBySku.set(li.sku, (qtyBySku.get(li.sku) ?? 0) + li.quantity);\n}\nif (!qtyBySku.size && !errors.length) errors.push('Order has no line items');\n\nconst line_items = [...qtyBySku].map(([sku, quantity]) => {\n  const p = bySku.get(sku);\n  const tier = p.Pricing.tiers.find(t => t.up_to === null || quantity <= t.up_to);\n  return {\n    sku,\n    title: p.Title,\n    quantity,\n    unit_amount_cents: tier.unit_amount_cents,\n    line_total_cents: quantity * tier.unit_amount_cents,\n    lead_time: p['Lead Time']\n  };\n});\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    currency: 'USD',\n    line_items,\n    total_cents: line_items.reduce((s, l) => s + l.line_total_cents, 0)\n  }\n}];"
+        "jsCode": "const input = $('When Executed by Another Workflow').first().json;\nconst row = $input.first().json;\n\nif (!row?.catalog_json) {\n  return [{ json: { valid: false, errors: [`No catalog for customer ${input.customerId ?? input.customer_id}`] } }];\n}\n\nconst catalog = JSON.parse(row.catalog_json);\n\n// Invariant: sku is the pricing key, so a duplicate sku would make the lookup\n// below silently price the order from an arbitrary row.\nconst skuCounts = new Map();\nfor (const p of catalog) skuCounts.set(p.sku, (skuCounts.get(p.sku) ?? 0) + 1);\nconst duplicateSkus = [...skuCounts].filter(([, n]) => n > 1).map(([sku]) => sku);\nif (duplicateSkus.length) {\n  return [{ json: { valid: false, errors: [`Catalog is invalid: duplicate sku(s) ${duplicateSkus.join(', ')}`] } }];\n}\n\nconst bySku = new Map(catalog.map(p => [p.sku, p]));\nconst errors = [];\n\n// Pricing is keyed on sku. `product_number` is the key the CRM product id gets\n// resolved from: it comes from the order's `productNumber` field and has to\n// match productNumber on the catalog entry for the line's sku. That catalog\n// check is what stops a caller pairing a cheap sku with a product it was not\n// priced as.\nconst PRODUCT_NUMBER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;\n\n// Consolidate duplicate skus so volume tiers apply to the true total\nconst qtyBySku = new Map();\nconst productNumberBySku = new Map();\nfor (const [i, li] of (input.lineItems ?? []).entries()) {\n  const product = bySku.get(li.sku);\n  if (!product) {\n    errors.push(`Line ${i + 1}: unknown sku '${li.sku}'`);\n    continue;\n  }\n  if (!Number.isInteger(li.quantity) || li.quantity < 1) {\n    errors.push(`Line ${i + 1}: invalid quantity '${li.quantity}'`);\n    continue;\n  }\n\n  const productNumber = String(li.productNumber ?? '').trim();\n  if (!productNumber) {\n    errors.push(`Line ${i + 1}: productNumber is required`);\n    continue;\n  }\n  if (!PRODUCT_NUMBER_PATTERN.test(productNumber)) {\n    errors.push(`Line ${i + 1}: productNumber '${productNumber}' is not a supported format`);\n    continue;\n  }\n\n  const catalogProductNumber = String(product.productNumber ?? '').trim();\n  if (!catalogProductNumber) {\n    errors.push(`Line ${i + 1}: catalog entry for sku '${li.sku}' has no productNumber`);\n    continue;\n  }\n  if (productNumber !== catalogProductNumber) {\n    errors.push(`Line ${i + 1}: productNumber '${productNumber}' does not match the catalog for sku '${li.sku}' (expected '${catalogProductNumber}')`);\n    continue;\n  }\n\n  qtyBySku.set(li.sku, (qtyBySku.get(li.sku) ?? 0) + li.quantity);\n  productNumberBySku.set(li.sku, productNumber);\n}\nif (!qtyBySku.size && !errors.length) errors.push('Order has no line items');\n\nconst line_items = [...qtyBySku].map(([sku, quantity]) => {\n  const p = bySku.get(sku);\n  const tier = p.pricing.tiers.find(t => t.upTo === null || quantity <= t.upTo);\n  return {\n    sku,\n    product_number: productNumberBySku.get(sku),\n    title: p.title,\n    quantity,\n    unit_amount_cents: tier.unitAmountCents,\n    line_total_cents: quantity * tier.unitAmountCents,\n    lead_time: p.leadTime\n  };\n});\n\nreturn [{\n  json: {\n    valid: errors.length === 0,\n    errors,\n    currency: 'USD',\n    line_items,\n    total_cents: line_items.reduce((s, l) => s + l.line_total_cents, 0)\n  }\n}];"
       },
       "id": "a84b4e49-cdfc-4e5a-9621-47c7afbade9d",
       "name": "Price Order",
@@ -93,9 +93,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "f8609faf-3572-4078-b6ed-07a297061eed",
-  "activeVersionId": null,
-  "versionCounter": 7,
+  "versionId": "0206a506-302d-42e6-afd7-5be65c74d360",
+  "activeVersionId": "0206a506-302d-42e6-afd7-5be65c74d360",
+  "versionCounter": 39,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
