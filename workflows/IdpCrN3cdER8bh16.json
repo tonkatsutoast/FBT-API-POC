@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-15T03:16:23.000Z",
+  "updatedAt": "2026-10-16T19:51:35.017Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -11,7 +11,6 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "orders",
-        "responseMode": "responseNode",
         "options": {
           "rawBody": false
         }
@@ -21,14 +20,14 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2064,
-        -64
+        -2656,
+        -96
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "//const b = $json.body;\nconst b = $('Webhook').first().json.body;\nif (!b) throw new Error('Webhook body is empty - check Content-Type: application/json');\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customerId}|${customer_ref}`;\n// No row means the caller sent an unknown/inactive customerId; fall back to {}\n// so the check below reports it instead of throwing on a missing item.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,\n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id\n  }\n}];"
+        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customerId}|${customer_ref}`;\n// No row means the caller sent an unknown/inactive customerId; fall back to {}\n// so the check below reports it instead of throwing on a missing item.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,\n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
@@ -244,15 +243,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const order = $('Build Context').first().json;\nreturn (order.lineItems ?? []).flatMap(li =>\n  (li.personalizationData ?? []).map(s => ({\n    json: {\n      //order_id: order.order_id,\n      //sku: li.sku,\n      //jobName: li.jobName ?? '',\n      //group: s.group ?? '',\n      studentId: s.studentId,\n      firstName: s.firstName,\n      lastName: s.lastName\n    }\n  }))\n);"
+        "jsCode": "const order = $('Build Context').first().json;\n\n// Students live on the line items (lineItems[].personalizationData[]).\n// Orders may legitimately carry no students at all.\nconst students = (order.lineItems ?? []).flatMap(li =>\n  (li.personalizationData ?? []).map(s => ({\n    studentId: s.studentId ?? '',\n    firstName: s.firstName ?? '',\n    lastName:  s.lastName  ?? ''\n  }))\n).filter(s => s.studentId || s.firstName || s.lastName);\n\nconst has_students = students.length > 0;\nconst flags = {\n  has_students,\n  art_work_provided: order.art_work_provided === true\n};\n\nconst rows = students.map(s => ({ json: { ...s, ...flags } }));\n\n// A zero-item result stops this branch (Students CSV -> Build Uploads -> ...\n// -> Respond Created would be skipped) and the caller would get no 201 for an\n// order that has already been created and charged. Always emit at least one\n// item so the response path always runs; the sentinel is not treated as a\n// student by Build Uploads (has_students is false).\nreturn rows.length\n  ? rows\n  : [{ json: { studentId: '', firstName: '', lastName: '', ...flags } }];"
       },
       "id": "f062981a-eefd-471d-9ac1-84afd9619226",
       "name": "Students",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
-        -112
+        3056,
+        -160
       ]
     },
     {
@@ -266,21 +265,21 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        2080,
-        -112
+        3280,
+        -160
       ]
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  po_number: ctx.po_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: $('Webhook').first().json.body.students?.length ?? 0,\n  total_amount: fmt(priced.total_cents)\n} }];"
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  order_number: $('Build Uploads').first().json.order_number,\n  po_number: ctx.po_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  total_amount: fmt(priced.total_cents)\n} }];"
       },
       "id": "b0b76abf-8361-4ffc-aafb-3433a28034bc",
       "name": "Build Confirmation",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2304,
-        -112
+        4176,
+        -160
       ],
       "executeOnce": true
     },
@@ -297,8 +296,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2528,
-        -112
+        4400,
+        -160
       ]
     },
     {
@@ -314,8 +313,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        816,
-        240
+        1232,
+        176
       ]
     },
     {
@@ -382,8 +381,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1216,
-        -96
+        1552,
+        -224
       ],
       "alwaysOutputData": true
     },
@@ -426,8 +425,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1440,
-        -96
+        1776,
+        -224
       ]
     },
     {
@@ -443,8 +442,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1664,
-        288
+        2000,
+        160
       ]
     },
     {
@@ -526,8 +525,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1664,
-        96
+        2000,
+        -32
       ]
     },
     {
@@ -568,8 +567,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1888,
-        96
+        2224,
+        -32
       ]
     },
     {
@@ -605,8 +604,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2304,
-        0
+        2640,
+        -128
       ]
     },
     {
@@ -622,8 +621,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2272,
-        384
+        2608,
+        256
       ]
     },
     {
@@ -636,6 +635,7 @@
           "cachedResultName": "api_customers",
           "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
         },
+        "matchType": "allConditions",
         "filters": {
           "conditions": [
             {
@@ -644,7 +644,6 @@
             }
           ]
         },
-        "matchType": "allConditions",
         "limit": 1
       },
       "type": "n8n-nodes-base.dataTable",
@@ -760,7 +759,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'rejected', errors: [ 'Customer ' + ($('Webhook').first().json.body.customerId ?? '(missing)') + ' is not known or is inactive' ] } }}",
+        "responseBody": "={{ { status: 'rejected', errors: [ 'Customer ' + ($('Normalize Order').first().json.body.customerId ?? '(missing)') + ' is not known or is inactive' ] } }}",
         "options": {
           "responseCode": 422
         }
@@ -773,6 +772,149 @@
         -1408,
         -336
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst so  = $('Create SalesOrder').first().json.body?.result ?? {};\n// The VTiger order number returned on creation, e.g. \"1234\" -> \"1234.png\"/\"1234.csv\".\nconst orderNo = so.salesorder_no ?? so.id ?? ctx.order_id;\n\nconst hasStudents = $('Students').first().json.has_students === true;\nconst hasArtwork  = ctx.art_work_provided === true;\n\nconst items = [];\n\n// Students CSV -> \"<vtiger order number>.csv\"\nif (hasStudents) {\n  const csv = $input.first()?.binary?.data;\n  if (csv) {\n    items.push({ json: { upload_file_name: `${orderNo}.csv` }, binary: { data: csv } });\n  }\n}\n\n// artWork -> \"<vtiger order number>.<ext>\"  (reads the original upload; the\n// binary does not survive Process Order, so it is taken from the Webhook node)\nif (hasArtwork) {\n  const art = $('Webhook').first().binary?.artWork;\n  if (art) {\n    items.push({ json: { upload_file_name: `${orderNo}.${ctx.art_work_extension}` }, binary: { data: art } });\n  }\n}\n\n// Nothing to upload -> emit a single marker so the branch continues to the\n// confirmation instead of dead-ending.\nif (!items.length) {\n  return [{ json: { has_upload: false, order_number: orderNo } }];\n}\nreturn items.map(i => ({ json: { ...i.json, has_upload: true, order_number: orderNo }, binary: i.binary }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3504,
+        -160
+      ],
+      "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
+      "name": "Build Uploads"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_upload }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3712,
+        -144
+      ],
+      "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
+      "name": "Anything to upload?"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.upload_file_name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "14w3wyhnpJSx76utux9PYqmIXuYFUzpwW",
+          "mode": "list",
+          "cachedResultName": "Kitetags",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/14w3wyhnpJSx76utux9PYqmIXuYFUzpwW"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3952,
+        -160
+      ],
+      "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
+      "name": "Upload to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SzrvR3BMldz3I1CS",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Webhook').first();\nconst headers = webhook.json.headers ?? {};\nconst is_multipart = String(headers['content-type'] ?? '').toLowerCase().startsWith('multipart/form-data');\n\n// multipart/form-data parts are flat, so the nested order payload rides in a\n// single part named `order` - as a TEXT field (paste the JSON) or as an\n// uploaded .json FILE (read by the `Read Order File` node). It is merged over\n// any flat form fields so the rest of the workflow sees the same canonical\n// `body` shape it would get from an application/json request.\nlet body = (webhook.json.body && typeof webhook.json.body === 'object') ? webhook.json.body : {};\n\nif (is_multipart) {\n  let raw = null;\n  if (typeof body.order === 'string') {\n    raw = body.order;                                   // `order` sent as a text field\n  } else {\n    try {\n      const read = $('Read Order File').first().json;   // set only when a file was read\n      if (typeof read?.data === 'string') raw = read.data;\n    } catch (e) { /* Read Order File did not run: there was no order file */ }\n  }\n  if (raw !== null) {\n    let parsed;\n    try {\n      parsed = JSON.parse(raw);\n    } catch (e) {\n      throw new Error(`multipart part 'order' is not valid JSON: ${e.message}`);\n    }\n    const { order, ...rest } = body;   // drop the raw part; do not carry it downstream\n    body = { ...rest, ...parsed };\n  }\n}\n\nreturn [{ json: { ...webhook.json, body, is_multipart } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1904,
+        96
+      ],
+      "id": "1221d0e6-6ad9-4465-9feb-752ba8e04c73",
+      "name": "Normalize Order"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$binary.order }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "a4ea6cb8-a035-4666-8512-74dbafc0320c"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2448,
+        -64
+      ],
+      "id": "663952ae-dcd8-496c-91fa-4504a230e78d",
+      "name": "Has Order File?"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "order",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -2080,
+        -144
+      ],
+      "id": "b2ffce25-64d8-4779-adc5-daf5f36ffd6d",
+      "name": "Read Order File"
     }
   ],
   "connections": {
@@ -780,7 +922,7 @@
       "main": [
         [
           {
-            "node": "Lookup Customer",
+            "node": "Has Order File?",
             "type": "main",
             "index": 0
           }
@@ -893,7 +1035,7 @@
       "main": [
         [
           {
-            "node": "Build Confirmation",
+            "node": "Build Uploads",
             "type": "main",
             "index": 0
           }
@@ -1048,6 +1190,86 @@
           }
         ]
       ]
+    },
+    "Build Uploads": {
+      "main": [
+        [
+          {
+            "node": "Anything to upload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to upload?": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Order": {
+      "main": [
+        [
+          {
+            "node": "Lookup Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Order File?": {
+      "main": [
+        [
+          {
+            "node": "Read Order File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Order File": {
+      "main": [
+        [
+          {
+            "node": "Normalize Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -1090,7 +1312,10 @@
         "f062981a-eefd-471d-9ac1-84afd9619226",
         "2e9b5bbd-4c0b-4406-b870-35c23a165670",
         "b0b76abf-8361-4ffc-aafb-3433a28034bc",
-        "0935027a-755e-4e09-bd3f-5c5cfb20071f"
+        "0935027a-755e-4e09-bd3f-5c5cfb20071f",
+        "a5a713a3-6a34-4cec-a148-9131f71a480b",
+        "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
+        "27b090cb-3872-44f6-9a32-64f12bc579c2"
       ],
       "description": "For valid orders: builds the student roster file and returns a 201 confirmation to the caller"
     },
@@ -1120,9 +1345,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "e8bd3852-ddfa-4525-8154-702cd4205104",
-  "activeVersionId": "e8bd3852-ddfa-4525-8154-702cd4205104",
-  "versionCounter": 134,
+  "versionId": "d986c3bd-5d3f-42a4-8e9b-81a34e4e465b",
+  "activeVersionId": "096bab42-5b72-4e1b-9e3b-42ae95fb6968",
+  "versionCounter": 150,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
