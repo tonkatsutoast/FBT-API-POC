@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-21T19:09:11.303Z",
+  "updatedAt": "2026-10-23T03:24:52.600Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -21,21 +21,21 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -2656,
-        -96
+        -3088,
+        -224
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customerId}|${customer_ref}`;\n// No row means the caller sent an unknown/inactive customerId; fall back to {}\n// so the check below reports it instead of throwing on a missing item.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
+        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customerId}|${customer_ref}`;\n// No row means the caller sent an unknown/inactive customerId; fall back to {}\n// so the check below reports it instead of throwing on a missing item.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    vtiger_contact_id: cust.vtiger_contact_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1072,
+        -1088,
         80
       ]
     },
@@ -113,7 +113,7 @@
           "parameters": [
             {
               "name": "query",
-              "value": "={{ \"SELECT id, productname FROM Products WHERE productname IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.product_number + \"'\").join(\",\") + \");\" }}"
+              "value": "={{ \"SELECT id, productname, cf_products_shortdescriptionnew, description FROM Products WHERE productname IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.product_number + \"'\").join(\",\") + \");\" }}"
             }
           ]
         },
@@ -145,7 +145,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ---- Pilot constants (move to customer config later) ----\n//const ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst lookup = $('Validate Product Lookup').first().json;\n\n//shipping and billing address come from the input JSON order\n// ---- Billing / shipping from the order payload ----\nconst clean = v => (v ?? '').toString().trim();\nconst fullName = a => [clean(a.firstName), clean(a.lastName)].filter(Boolean).join(' ');\n\nconst bill = ctx.billing ?? {};\nconst ship = ctx.shipping ?? {};\n\nconst REQUIRED = ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode'];\nconst missing = [\n  ...REQUIRED.filter(k => !clean(bill[k])).map(k => `billing.${k}`),\n  ...REQUIRED.filter(k => !clean(ship[k])).map(k => `shipping.${k}`)\n];\nif (missing.length) throw new Error(`Missing address fields: ${missing.join(', ')}`);\n\n// Field names follow the Zapier implementation; confirm against /describe?elementType=SalesOrder\nconst ADDRESS = {\n  cf_salesorder_billtonamenew:    fullName(bill),\n  cf_salesorder_billtocompanynew: clean(bill.company),\n  cf_1497:                        clean(bill.phone),        // bill-to phone\n  bill_street:                    clean(bill.address1),\n  bill_pobox:                     clean(bill.address2),     // Zapier puts address line 2 here\n  bill_city:                      clean(bill.city),\n  bill_state:                     clean(bill.state),\n  bill_code:                      clean(bill.postcode),\n  bill_country:                   clean(bill.country) || 'US',\n\n  cf_salesorder_shiptonamenew:    fullName(ship),\n  cf_salesorder_shiptocompanynew: clean(ship.company),\n  cf_1499:                        clean(ship.phone),        // ship-to phone\n  ship_street:                    clean(ship.address1),\n  ship_pobox:                     clean(ship.address2),\n  ship_city:                      clean(ship.city),\n  ship_state:                     clean(ship.state),\n  ship_code:                      clean(ship.postcode),\n  ship_country:                   clean(ship.country) || 'US'\n};\n\n// CRM identity comes from configuration, not from constants in this node:\n// the account from the customer's api_customers row, the owner from env_config.\nif (!ctx.vtiger_account_id) {\n  throw new Error(`Customer ${ctx.customer_id} has no vtiger_account_id configured`);\n}\nif (!ctx.vtiger_assigned_user_id) {\n  throw new Error('env_config.vtiger_assigned_user_id is not set');\n}\n\n// Product Number -> VTiger Products record id, asserted complete upstream.\nconst idByProductNumber = lookup.by_product_number ?? {};\n\n// Invariant: every line item must carry a CRM product id. This is only\n// reachable if the lookup validation is bypassed, so fail loudly rather than\n// create a sales order whose lines reference no product.\nconst unresolved = priced.line_items\n  .filter(l => !idByProductNumber[String(l.product_number).trim()])\n  .map(l => `${l.sku} (Product Number ${l.product_number})`);\nif (unresolved.length) {\n  throw new Error(`No VTiger product id resolved for: ${unresolved.join('; ')}`);\n}\n\nconst element = {\n  //subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  subject: `Order ${ctx.order_id} / PO ${ctx.customer_reference_number}`,\n  account_id: ctx.vtiger_account_id,\n  assigned_user_id: ctx.vtiger_assigned_user_id,\n  sostatus: 'Created',\n  //purchaseorder: ctx.po_number ?? '',\n  vtiger_purchaseorder: ctx.customer_reference_number,\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => ({\n    productid: idByProductNumber[String(l.product_number).trim()],\n    quantity: l.quantity,\n    listprice: (l.unit_amount_cents / 100).toFixed(2)\n  }))\n};\n\n// Serialisation to a JSON string happens in Create SalesOrder, at the point\n// it is needed: VTiger wants `element` as a string in a form-urlencoded body.\n// Keeping it an object here means the node's output stays readable.\nreturn [{ json: { element } }];"
+        "jsCode": "// ---- Pilot constants (move to customer config later) ----\n//const ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst lookup = $('Validate Product Lookup').first().json;\n\n//shipping and billing address come from the input JSON order\n// ---- Billing / shipping from the order payload ----\nconst clean = v => (v ?? '').toString().trim();\nconst fullName = a => [clean(a.firstName), clean(a.lastName)].filter(Boolean).join(' ');\n// --- US state code -> VTiger picklist value (full name, verified via /describe) ---\nconst US_STATES = {\n  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',\n  CO:'Colorado', CT:'Connecticut', DE:'Delaware', DC:'District of Columbia',\n  FL:'Florida', GA:'Georgia', HI:'Hawaii', ID:'Idaho', IL:'Illinois',\n  IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky', LA:'Louisiana',\n  ME:'Maine', MD:'Maryland', MA:'Massachusetts', MI:'Michigan', MN:'Minnesota',\n  MS:'Mississippi', MO:'Missouri', MT:'Montana', NE:'Nebraska', NV:'Nevada',\n  NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico', NY:'New York',\n  NC:'North Carolina', ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon',\n  PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina', SD:'South Dakota',\n  TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont', VA:'Virginia',\n  WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming'\n};\n\n// Accept a 2-letter code (\"CA\"/\"ca\") or an already-full name (\"California\").\nconst stateName = v => {\n  const s = clean(v);\n  return US_STATES[s.toUpperCase()] ?? s;\n};\nconst bill = ctx.billing ?? {};\nconst ship = ctx.shipping ?? {};\n\nconst REQUIRED = ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode'];\nconst missing = [\n  ...REQUIRED.filter(k => !clean(bill[k])).map(k => `billing.${k}`),\n  ...REQUIRED.filter(k => !clean(ship[k])).map(k => `shipping.${k}`)\n];\nif (missing.length) throw new Error(`Missing address fields: ${missing.join(', ')}`);\n\n// Field names follow the Zapier implementation; confirm against /describe?elementType=SalesOrder\nconst ADDRESS = {\n  cf_salesorder_billtonamenew:    fullName(bill),\n  cf_salesorder_billtocompanynew: clean(bill.company),\n  cf_1497:                        clean(bill.phone),        // bill-to phone\n  bill_street:                    clean(bill.address1),\n  bill_pobox:                     clean(bill.address2),     // Zapier puts address line 2 here\n  bill_city:                      clean(bill.city),\n  bill_state:                     stateName(bill.state),\n  bill_code:                      clean(bill.postcode),\n  bill_country:                   clean(bill.country) || 'US',\n\n  cf_salesorder_shiptonamenew:    fullName(ship),\n  cf_salesorder_shiptocompanynew: clean(ship.company),\n  cf_1499:                        clean(ship.phone),        // ship-to phone\n  ship_street:                    clean(ship.address1),\n  ship_pobox:                     clean(ship.address2),\n  ship_city:                      clean(ship.city),\n  ship_state:                     stateName(ship.state),\n  ship_code:                      clean(ship.postcode),\n  ship_country:                   clean(ship.country) || 'US'\n};\n\n// CRM identity comes from configuration, not from constants in this node:\n// the account from the customer's api_customers row, the owner from env_config.\nif (!ctx.vtiger_account_id) {\n  throw new Error(`Customer ${ctx.customer_id} has no vtiger_account_id configured`);\n}\nif (!ctx.vtiger_assigned_user_id) {\n  throw new Error('env_config.vtiger_assigned_user_id is not set');\n}\n\n// Product Number -> VTiger Products record id, asserted complete upstream.\nconst idByProductNumber = lookup.by_product_number ?? {};\n\n// Invariant: every line item must carry a CRM product id. This is only\n// reachable if the lookup validation is bypassed, so fail loudly rather than\n// create a sales order whose lines reference no product.\nconst unresolved = priced.line_items\n  .filter(l => !idByProductNumber[String(l.product_number).trim()])\n  .map(l => `${l.sku} (Product Number ${l.product_number})`);\nif (unresolved.length) {\n  throw new Error(`No VTiger product id resolved for: ${unresolved.join('; ')}`);\n}\n\n// jobName comes from the original order payload, keyed by sku.\n// order.process consolidates duplicate skus, so keep every distinct job name.\nconst jobNamesBySku = new Map();\nfor (const li of (ctx.lineItems ?? [])) {\n  const sku = String(li.sku ?? '').trim();\n  const job = String(li.jobName ?? '').trim();\n  if (!sku || !job) continue;\n  const prev = jobNamesBySku.get(sku);\n  if (!prev) jobNamesBySku.set(sku, job);\n  else if (!prev.split(' | ').includes(job)) jobNamesBySku.set(sku, `${prev} | ${job}`);\n}\n\nconst element = {\n  //subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  subject: `Order ${ctx.order_id} / PO ${ctx.customer_reference_number}`,\n  account_id: ctx.vtiger_account_id,\n  contact_id: ctx.vtiger_contact_id,\n  cf_salesorder_datamanagementrequired: 'Yes',\n  cf_salesorder_usecustomershippingaccount: 'Yes',\n  assigned_user_id: ctx.vtiger_assigned_user_id,\n  sostatus: 'Created',\n  cf_843: 'API Order',  \n  vtiger_purchaseorder: ctx.customer_reference_number,\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => {\n    const pn = String(l.product_number).trim();\n    const job = jobNamesBySku.get(String(l.sku).trim()) ?? '';\n    const shortDesc = lookup.short_description_by_product_number?.[pn] ?? '';\n    const itemName = shortDesc || l.title;          // fallback to catalog title if empty\n    const longDesc = lookup.long_description_by_product_number?.[pn] ?? '';\n    //const orderRef = ctx.order_id;                 // see note below\n    const orderRef = ctx.customer_reference_number;\n    const suffix = [orderRef, job].filter(Boolean).join('  to ');\n    const comment = longDesc ? (suffix ? `${longDesc} - ${suffix}` : longDesc) : '';\n    return {\n      productid: idByProductNumber[pn],\n      quantity: l.quantity,\n      listprice: (l.unit_amount_cents / 100).toFixed(2),\n      cf_salesorder_jobname: job ? `${job} ${itemName}` : itemName,\n      comment\n    };\n  })\n};\n\n// Serialisation to a JSON string happens in Create SalesOrder, at the point\n// it is needed: VTiger wants `element` as a string in a form-urlencoded body.\n// Keeping it an object here means the node's output stays readable.\nreturn [{ json: { element } }];"
       },
       "id": "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
       "name": "Build SalesOrder",
@@ -204,12 +204,11 @@
     {
       "parameters": {
         "conditions": {
-          "combinator": "and",
           "options": {
             "caseSensitive": true,
             "leftValue": "",
             "typeValidation": "strict",
-            "version": 2
+            "version": 3
           },
           "conditions": [
             {
@@ -218,7 +217,8 @@
               "operator": {
                 "type": "number",
                 "operation": "equals"
-              }
+              },
+              "id": "1ab84eb5-0494-4d5e-8569-06293d55d9c5"
             },
             {
               "leftValue": "={{ $json.body.success }}",
@@ -227,9 +227,11 @@
                 "type": "boolean",
                 "operation": "true",
                 "singleValue": true
-              }
+              },
+              "id": "d2594e43-7240-4ed6-bf32-f3129623ef6c"
             }
-          ]
+          ],
+          "combinator": "and"
         },
         "options": {}
       },
@@ -350,8 +352,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -1376,
-        -32
+        -1488,
+        -240
       ],
       "id": "951986e2-4f7a-4675-9971-64616557d9d0",
       "name": "Load Config"
@@ -581,7 +583,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/update",
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/revise",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendBody": true,
@@ -594,15 +596,13 @@
             },
             {
               "name": "element",
-              "value": "={{ JSON.stringify({ id: $('Create SalesOrder').item.json.body.result.id, sostatus: \"Approved\" }) }}"
+              "value": "={{ JSON.stringify({ id: $('Create SalesOrder').item.json.body.result.id, sostatus: \"Created\", cf_1311: \"Payment Received in Full\", cf_1283: new Date().toISOString().slice(0, 10), cf_1315: `payment collected via card on file (Stripe) - ${$json.body.id}` }) }}"
             }
           ]
         },
         "options": {
           "response": {
-            "response": {
-              "neverError": true
-            }
+            "response": {}
           }
         }
       },
@@ -613,7 +613,13 @@
       "position": [
         2640,
         -128
-      ]
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      }
     },
     {
       "parameters": {
@@ -656,8 +662,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -1616,
-        -160
+        -1936,
+        -128
       ],
       "id": "9cc5d522-1d7c-4e99-86be-482235d9b086",
       "name": "Lookup Customer",
@@ -665,7 +671,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Validate the VTiger Products query before anything is built from it.\n//\n// VTiger's query API is quietly tolerant in three separate ways, none of which\n// is an error at the transport level:\n//   * an unmatched lookup answers HTTP 200 with {\"success\": true, \"result\": []}\n//   * a column that does not exist comes back as \"\" instead of failing\n//   * responses are served as text/html, so the HTTP node may hand back the raw\n//     text under `data` rather than a parsed object under `body`\n// Every one of those would silently produce a sales order with no product on\n// its lines, so nothing downstream may proceed on an unverified lookup.\nconst raw = $input.first().json;\nconst wanted = [...new Set(\n  $('Process Order').first().json.line_items.map(l => String(l.product_number).trim())\n)];\n\nconst fail = (reason) => [{ json: { ok: false, lookup_error: reason } }];\n\n// Lookup Products requests responseFormat=json; fall back to parsing raw `data`\n// so that a node copied from elsewhere still fails loudly instead of silently.\nlet payload = raw.body !== undefined ? raw.body : raw.data;\nif (typeof payload === 'string') {\n  try {\n    payload = payload.trim() === '' ? null : JSON.parse(payload);\n  } catch {\n    payload = null;\n  }\n}\n\nif (raw.statusCode !== undefined && raw.statusCode !== 200) {\n  return fail(`VTiger Products query failed with HTTP ${raw.statusCode}${raw.statusMessage ? ' ' + raw.statusMessage : ''}`);\n}\nif (payload === null || typeof payload !== 'object') {\n  return fail('VTiger Products query returned a response that is not JSON');\n}\nif (payload.success !== true) {\n  return fail(`VTiger Products query was rejected: ${JSON.stringify(payload.error ?? payload)}`);\n}\nif (!Array.isArray(payload.result)) {\n  return fail('VTiger Products query returned no result array');\n}\nif (payload.result.length === 0) {\n  return fail(`VTiger has no Products matching: ${wanted.join(', ')}`);\n}\nif (payload.result.some(r => r.productname === undefined || r.productname === null)) {\n  return fail('VTiger response is missing the productname column');\n}\n\nconst byProductNumber = {};\nfor (const r of payload.result) {\n  const name = String(r.productname).trim();\n  if (name && r.id) byProductNumber[name] = r.id;\n}\n\nconst missing = wanted.filter(n => !byProductNumber[n]);\nif (missing.length) {\n  return fail(`Product Number(s) not found in VTiger Products: ${missing.join(', ')}`);\n}\n\nreturn [{ json: { ok: true, by_product_number: byProductNumber, matched_count: payload.result.length } }];"
+        "jsCode": "// Validate the VTiger Products query before anything is built from it.\n//\n// VTiger's query API is quietly tolerant in three separate ways, none of which\n// is an error at the transport level:\n//   * an unmatched lookup answers HTTP 200 with {\"success\": true, \"result\": []}\n//   * a column that does not exist comes back as \"\" instead of failing\n//   * responses are served as text/html, so the HTTP node may hand back the raw\n//     text under `data` rather than a parsed object under `body`\n// Every one of those would silently produce a sales order with no product on\n// its lines, so nothing downstream may proceed on an unverified lookup.\nconst raw = $input.first().json;\nconst wanted = [...new Set(\n  $('Process Order').first().json.line_items.map(l => String(l.product_number).trim())\n)];\n\nconst fail = (reason) => [{ json: { ok: false, lookup_error: reason } }];\n\n// Lookup Products requests responseFormat=json; fall back to parsing raw `data`\n// so that a node copied from elsewhere still fails loudly instead of silently.\nlet payload = raw.body !== undefined ? raw.body : raw.data;\nif (typeof payload === 'string') {\n  try {\n    payload = payload.trim() === '' ? null : JSON.parse(payload);\n  } catch {\n    payload = null;\n  }\n}\n\nif (raw.statusCode !== undefined && raw.statusCode !== 200) {\n  return fail(`VTiger Products query failed with HTTP ${raw.statusCode}${raw.statusMessage ? ' ' + raw.statusMessage : ''}`);\n}\nif (payload === null || typeof payload !== 'object') {\n  return fail('VTiger Products query returned a response that is not JSON');\n}\nif (payload.success !== true) {\n  return fail(`VTiger Products query was rejected: ${JSON.stringify(payload.error ?? payload)}`);\n}\nif (!Array.isArray(payload.result)) {\n  return fail('VTiger Products query returned no result array');\n}\nif (payload.result.length === 0) {\n  return fail(`VTiger has no Products matching: ${wanted.join(', ')}`);\n}\nif (payload.result.some(r => r.productname === undefined || r.productname === null)) {\n  return fail('VTiger response is missing the productname column');\n}\n\nconst byProductNumber = {};\nconst shortDescriptionByProductNumber = {};\nconst longDescriptionByProductNumber = {};\nfor (const r of payload.result) {\n  const name = String(r.productname).trim();\n  if (!name || !r.id) continue;\n  byProductNumber[name] = r.id;\n  shortDescriptionByProductNumber[name] = String(r.cf_products_shortdescriptionnew ?? '').trim();\n  longDescriptionByProductNumber[name] = String(r.description ?? '').trim();\n}\n\nconst missing = wanted.filter(n => !byProductNumber[n]);\nif (missing.length) {\n  return fail(`Product Number(s) not found in VTiger Products: ${missing.join(', ')}`);\n}\n\nreturn [{ json: {\n  ok: true,\n  by_product_number: byProductNumber,\n  short_description_by_product_number: shortDescriptionByProductNumber,\n  long_description_by_product_number: longDescriptionByProductNumber,\n  matched_count: payload.result.length\n} }];"
       },
       "id": "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
       "name": "Validate Product Lookup",
@@ -759,8 +765,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1616,
-        -336
+        -1696,
+        -224
       ]
     },
     {
@@ -776,8 +782,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -1408,
-        -336
+        -1504,
+        32
       ]
     },
     {
@@ -868,8 +874,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1904,
-        96
+        -2336,
+        -32
       ],
       "id": "1221d0e6-6ad9-4465-9feb-752ba8e04c73",
       "name": "Normalize Order"
@@ -902,8 +908,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -2448,
-        -64
+        -2880,
+        -192
       ],
       "id": "663952ae-dcd8-496c-91fa-4504a230e78d",
       "name": "Has Order File?"
@@ -917,8 +923,8 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
       "position": [
-        -2080,
-        -144
+        -2512,
+        -272
       ],
       "id": "b2ffce25-64d8-4779-adc5-daf5f36ffd6d",
       "name": "Read Order File"
@@ -1352,9 +1358,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "e2e34ee6-1e63-4f9f-bbee-713b9a38634d",
-  "activeVersionId": "ccd1293d-2b75-4f59-8235-185c0f8701e7",
-  "versionCounter": 186,
+  "versionId": "5722658f-6677-469d-9915-d7abdfd955cd",
+  "activeVersionId": "7d8c71d8-326c-4cdd-aed9-721987b9757d",
+  "versionCounter": 270,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
