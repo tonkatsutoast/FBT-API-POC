@@ -93,8 +93,8 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "0206a506-302d-42e6-afd7-5be65c74d360",
-  "activeVersionId": "0206a506-302d-42e6-afd7-5be65c74d360",
+  "versionId": "e544b7dd-1d02-44c8-a49e-914eea26be0c",
+  "activeVersionId": "e544b7dd-1d02-44c8-a49e-914eea26be0c",
   "versionCounter": 39,
   "triggerCount": 0,
   "sourceWorkflowId": null,
@@ -120,7 +120,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version e544b7dd",
+    "description": ""
   }
 }
