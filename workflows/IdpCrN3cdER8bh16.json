@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-10-26T18:30:21.221Z",
+  "updatedAt": "2026-10-30T17:14:45.546Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -21,14 +21,14 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -3088,
-        -224
+        -4128,
+        -208
       ],
       "webhookId": "18213a3c-3fac-415a-86b2-d9b186ac97ef"
     },
     {
       "parameters": {
-        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\nconst idem_key = `${b.customerId}|${customer_ref}`;\n// No row means the caller sent an unknown/inactive customerId; fall back to {}\n// so the check below reports it instead of throwing on a missing item.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    vtiger_contact_id: cust.vtiger_contact_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
+        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\n\n// Resolve the authenticated customer before deriving the idempotency key.\n// With key-based lookup, \"no row\" now means the key is unknown or revoked.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nb.customerId = cust.customer_id;   // authenticated identity wins over the body\n\nconst idem_key = `${b.customerId}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    vtiger_contact_id: cust.vtiger_contact_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
@@ -133,7 +133,7 @@
       "typeVersion": 4.3,
       "position": [
         32,
-        -96
+        -16
       ],
       "executeOnce": true,
       "credentials": {
@@ -145,7 +145,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// ---- Pilot constants (move to customer config later) ----\n//const ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst lookup = $('Validate Product Lookup').first().json;\n\n//shipping and billing address come from the input JSON order\n// ---- Billing / shipping from the order payload ----\nconst clean = v => (v ?? '').toString().trim();\nconst fullName = a => [clean(a.firstName), clean(a.lastName)].filter(Boolean).join(' ');\n// --- US state code -> VTiger picklist value (full name, verified via /describe) ---\nconst US_STATES = {\n  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',\n  CO:'Colorado', CT:'Connecticut', DE:'Delaware', DC:'District of Columbia',\n  FL:'Florida', GA:'Georgia', HI:'Hawaii', ID:'Idaho', IL:'Illinois',\n  IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky', LA:'Louisiana',\n  ME:'Maine', MD:'Maryland', MA:'Massachusetts', MI:'Michigan', MN:'Minnesota',\n  MS:'Mississippi', MO:'Missouri', MT:'Montana', NE:'Nebraska', NV:'Nevada',\n  NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico', NY:'New York',\n  NC:'North Carolina', ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon',\n  PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina', SD:'South Dakota',\n  TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont', VA:'Virginia',\n  WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming'\n};\n\n// Accept a 2-letter code (\"CA\"/\"ca\") or an already-full name (\"California\").\nconst stateName = v => {\n  const s = clean(v);\n  return US_STATES[s.toUpperCase()] ?? s;\n};\nconst bill = ctx.billing ?? {};\nconst ship = ctx.shipping ?? {};\n\nconst REQUIRED = ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode'];\nconst missing = [\n  ...REQUIRED.filter(k => !clean(bill[k])).map(k => `billing.${k}`),\n  ...REQUIRED.filter(k => !clean(ship[k])).map(k => `shipping.${k}`)\n];\nif (missing.length) throw new Error(`Missing address fields: ${missing.join(', ')}`);\n\n// Field names follow the Zapier implementation; confirm against /describe?elementType=SalesOrder\nconst ADDRESS = {\n  cf_salesorder_billtonamenew:    fullName(bill),\n  cf_salesorder_billtocompanynew: clean(bill.company),\n  cf_1497:                        clean(bill.phone),        // bill-to phone\n  bill_street:                    clean(bill.address1),\n  bill_pobox:                     clean(bill.address2),     // Zapier puts address line 2 here\n  bill_city:                      clean(bill.city),\n  bill_state:                     stateName(bill.state),\n  bill_code:                      clean(bill.postcode),\n  bill_country:                   clean(bill.country) || 'US',\n\n  cf_salesorder_shiptonamenew:    fullName(ship),\n  cf_salesorder_shiptocompanynew: clean(ship.company),\n  cf_1499:                        clean(ship.phone),        // ship-to phone\n  ship_street:                    clean(ship.address1),\n  ship_pobox:                     clean(ship.address2),\n  ship_city:                      clean(ship.city),\n  ship_state:                     stateName(ship.state),\n  ship_code:                      clean(ship.postcode),\n  ship_country:                   clean(ship.country) || 'US'\n};\n\n// CRM identity comes from configuration, not from constants in this node:\n// the account from the customer's api_customers row, the owner from env_config.\nif (!ctx.vtiger_account_id) {\n  throw new Error(`Customer ${ctx.customer_id} has no vtiger_account_id configured`);\n}\nif (!ctx.vtiger_assigned_user_id) {\n  throw new Error('env_config.vtiger_assigned_user_id is not set');\n}\n\n// Product Number -> VTiger Products record id, asserted complete upstream.\nconst idByProductNumber = lookup.by_product_number ?? {};\n\n// Invariant: every line item must carry a CRM product id. This is only\n// reachable if the lookup validation is bypassed, so fail loudly rather than\n// create a sales order whose lines reference no product.\nconst unresolved = priced.line_items\n  .filter(l => !idByProductNumber[String(l.product_number).trim()])\n  .map(l => `${l.sku} (Product Number ${l.product_number})`);\nif (unresolved.length) {\n  throw new Error(`No VTiger product id resolved for: ${unresolved.join('; ')}`);\n}\n\n// jobName comes from the original order payload, keyed by sku.\n// order.process consolidates duplicate skus, so keep every distinct job name.\nconst jobNamesBySku = new Map();\nfor (const li of (ctx.lineItems ?? [])) {\n  const sku = String(li.sku ?? '').trim();\n  const job = String(li.jobName ?? '').trim();\n  if (!sku || !job) continue;\n  const prev = jobNamesBySku.get(sku);\n  if (!prev) jobNamesBySku.set(sku, job);\n  else if (!prev.split(' | ').includes(job)) jobNamesBySku.set(sku, `${prev} | ${job}`);\n}\n\n// If the order carries a single distinct job name, apply it to every line.\nconst distinctJobs = [...new Set([...jobNamesBySku.values()])];\nconst orderJob = distinctJobs.length === 1 ? distinctJobs[0] : '';\n// Work Location: input uses -FAC / -CSB; VTiger cf_2030 uses named locations.\nconst WORK_LOCATION = {\n  FAC: 'China Purchasing',\n  CSB: 'USA Service Bureau'\n};\nconst workLocationKey = String(ctx.workLocation ?? '').trim().toUpperCase();\nconst workLocation = workLocationKey ? WORK_LOCATION[workLocationKey] : '';\nif (workLocationKey && !workLocation) {\n  throw new Error(`Unknown workLocation '${ctx.workLocation}' (expected FAC or CSB)`);\n}\nconst element = {\n  //subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  subject: `Order ${ctx.order_id} / PO ${ctx.customer_reference_number}`,\n  account_id: ctx.vtiger_account_id,\n  contact_id: ctx.vtiger_contact_id,\n  cf_salesorder_datamanagementrequired: 'Yes',\n  cf_salesorder_usecustomershippingaccount: 'Yes',\n  assigned_user_id: ctx.vtiger_assigned_user_id,\n  sostatus: 'Created',\n  cf_843: 'API Order',  \n  cf_2030: workLocation,\n  vtiger_purchaseorder: ctx.customer_reference_number,\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => {\n    const pn = String(l.product_number).trim();\n    //const job = jobNamesBySku.get(String(l.sku).trim()) ?? '';\n    const job = jobNamesBySku.get(String(l.sku).trim()) || orderJob;\n    const shortDesc = lookup.short_description_by_product_number?.[pn] ?? '';\n    const itemName = shortDesc || l.title;          // fallback to catalog title if empty\n    const longDesc = lookup.long_description_by_product_number?.[pn] ?? '';\n    const orderRef = ctx.customer_reference_number;\n    const jobNameValue = `${job ? `${job} ${itemName}` : itemName}${orderRef ? ` - ${orderRef}` : ''}`;\n    const suffix = [orderRef, job].filter(Boolean).join('  to ');\n    const comment = longDesc ? (suffix ? `${longDesc} - ${suffix}` : longDesc) : '';\n    return {\n      productid: idByProductNumber[pn],\n      quantity: l.quantity,\n      listprice: (l.unit_amount_cents / 100).toFixed(2),\n      //cf_salesorder_jobname: job ? `${job} ${itemName}` : itemName,\n      cf_salesorder_jobname: jobNameValue,\n      comment\n    };\n  })\n};\n\n// Serialisation to a JSON string happens in Create SalesOrder, at the point\n// it is needed: VTiger wants `element` as a string in a form-urlencoded body.\n// Keeping it an object here means the node's output stays readable.\nreturn [{ json: { element } }];"
+        "jsCode": "// ---- Pilot constants (move to customer config later) ----\n//const ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst lookup = $('Validate Product Lookup').first().json;\n\n//shipping and billing address come from the input JSON order\n// ---- Billing / shipping from the order payload ----\nconst clean = v => (v ?? '').toString().trim();\nconst fullName = a => [clean(a.firstName), clean(a.lastName)].filter(Boolean).join(' ');\n// --- US state code -> VTiger picklist value (full name, verified via /describe) ---\nconst US_STATES = {\n  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',\n  CO:'Colorado', CT:'Connecticut', DE:'Delaware', DC:'District of Columbia',\n  FL:'Florida', GA:'Georgia', HI:'Hawaii', ID:'Idaho', IL:'Illinois',\n  IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky', LA:'Louisiana',\n  ME:'Maine', MD:'Maryland', MA:'Massachusetts', MI:'Michigan', MN:'Minnesota',\n  MS:'Mississippi', MO:'Missouri', MT:'Montana', NE:'Nebraska', NV:'Nevada',\n  NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico', NY:'New York',\n  NC:'North Carolina', ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon',\n  PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina', SD:'South Dakota',\n  TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont', VA:'Virginia',\n  WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming'\n};\n\n// Accept a 2-letter code (\"CA\"/\"ca\") or an already-full name (\"California\").\nconst stateName = v => {\n  const s = clean(v);\n  return US_STATES[s.toUpperCase()] ?? s;\n};\nconst bill = ctx.billing ?? {};\nconst ship = ctx.shipping ?? {};\n\nconst REQUIRED = ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode'];\nconst missing = [\n  ...REQUIRED.filter(k => !clean(bill[k])).map(k => `billing.${k}`),\n  ...REQUIRED.filter(k => !clean(ship[k])).map(k => `shipping.${k}`)\n];\nif (missing.length) throw new Error(`Missing address fields: ${missing.join(', ')}`);\n\n// Field names follow the Zapier implementation; confirm against /describe?elementType=SalesOrder\nconst ADDRESS = {\n  cf_salesorder_billtonamenew:    fullName(bill),\n  cf_salesorder_billtocompanynew: clean(bill.company),\n  cf_1497:                        clean(bill.phone),        // bill-to phone\n  bill_street:                    clean(bill.address1),\n  bill_pobox:                     clean(bill.address2),     // Zapier puts address line 2 here\n  bill_city:                      clean(bill.city),\n  bill_state:                     stateName(bill.state),\n  bill_code:                      clean(bill.postcode),\n  bill_country:                   clean(bill.country) || 'US',\n\n  cf_salesorder_shiptonamenew:    fullName(ship),\n  cf_salesorder_shiptocompanynew: clean(ship.company),\n  cf_1499:                        clean(ship.phone),        // ship-to phone\n  ship_street:                    clean(ship.address1),\n  ship_pobox:                     clean(ship.address2),\n  ship_city:                      clean(ship.city),\n  ship_state:                     stateName(ship.state),\n  ship_code:                      clean(ship.postcode),\n  ship_country:                   clean(ship.country) || 'US'\n};\n\n// CRM identity comes from configuration, not from constants in this node:\n// the account from the customer's api_customers row, the owner from env_config.\nif (!ctx.vtiger_account_id) {\n  throw new Error(`Customer ${ctx.customer_id} has no vtiger_account_id configured`);\n}\nif (!ctx.vtiger_assigned_user_id) {\n  throw new Error('env_config.vtiger_assigned_user_id is not set');\n}\n\n// Product Number -> VTiger Products record id, asserted complete upstream.\nconst idByProductNumber = lookup.by_product_number ?? {};\n\n// Invariant: every line item must carry a CRM product id. This is only\n// reachable if the lookup validation is bypassed, so fail loudly rather than\n// create a sales order whose lines reference no product.\nconst unresolved = priced.line_items\n  .filter(l => !idByProductNumber[String(l.product_number).trim()])\n  .map(l => `${l.sku} (Product Number ${l.product_number})`);\nif (unresolved.length) {\n  throw new Error(`No VTiger product id resolved for: ${unresolved.join('; ')}`);\n}\n\n// jobName comes from the original order payload, keyed by sku.\n// order.process consolidates duplicate skus, so keep every distinct job name.\nconst jobNamesBySku = new Map();\nfor (const li of (ctx.lineItems ?? [])) {\n  const sku = String(li.sku ?? '').trim();\n  const job = String(li.jobName ?? '').trim();\n  if (!sku || !job) continue;\n  const prev = jobNamesBySku.get(sku);\n  if (!prev) jobNamesBySku.set(sku, job);\n  else if (!prev.split(' | ').includes(job)) jobNamesBySku.set(sku, `${prev} | ${job}`);\n}\n\n// If the order carries a single distinct job name, apply it to every line.\nconst distinctJobs = [...new Set([...jobNamesBySku.values()])];\nconst orderJob = distinctJobs.length === 1 ? distinctJobs[0] : '';\n// Work Location: input uses -FAC / -CSB; VTiger cf_2030 uses named locations.\nconst WORK_LOCATION = {\n  FAC: 'China Factory',\n  CSB: 'USA Service Bureau'\n};\nconst workLocationKey = String(ctx.workLocation ?? '').trim().toUpperCase();\nconst workLocation = workLocationKey ? WORK_LOCATION[workLocationKey] : '';\nif (workLocationKey && !workLocation) {\n  throw new Error(`Unknown workLocation '${ctx.workLocation}' (expected FAC or CSB)`);\n}\nconst transshipmentNeeded = workLocationKey === 'FAC' ? '1' : '0';\nconst element = {\n  //subject: `Order ${ctx.order_id}${ctx.po_number ? ' / PO ' + ctx.po_number : ''}`,\n  subject: `Order ${ctx.order_id} / PO ${ctx.customer_reference_number}`,\n  account_id: ctx.vtiger_account_id,\n  contact_id: ctx.vtiger_contact_id,\n  cf_salesorder_datamanagementrequired: 'Yes',\n  cf_salesorder_usecustomershippingaccount: 'Yes',\n  assigned_user_id: ctx.vtiger_assigned_user_id,\n  sostatus: 'Created',\n  cf_843: 'API Order',  \n  cf_2030: workLocation,\n  cf_salesorder_transshipmentneeded: transshipmentNeeded,\n  vtiger_purchaseorder: ctx.customer_reference_number,\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  LineItems: priced.line_items.map(l => {\n    const pn = String(l.product_number).trim();\n    //const job = jobNamesBySku.get(String(l.sku).trim()) ?? '';\n    const job = jobNamesBySku.get(String(l.sku).trim()) || orderJob;\n    const shortDesc = lookup.short_description_by_product_number?.[pn] ?? '';\n    const itemName = shortDesc || l.title;          // fallback to catalog title if empty\n    const longDesc = lookup.long_description_by_product_number?.[pn] ?? '';\n    const orderRef = ctx.customer_reference_number;\n    const jobNameValue = `${job ? `${job} ${itemName}` : itemName}${orderRef ? ` - ${orderRef}` : ''}`;\n    const suffix = [orderRef, job].filter(Boolean).join('  to ');\n    const comment = longDesc ? (suffix ? `${longDesc} - ${suffix}` : longDesc) : '';\n    return {\n      productid: idByProductNumber[pn],\n      quantity: l.quantity,\n      listprice: (l.unit_amount_cents / 100).toFixed(2),\n      //cf_salesorder_jobname: job ? `${job} ${itemName}` : itemName,\n      cf_salesorder_jobname: jobNameValue,\n      comment\n    };\n  })\n};\n\n// Serialisation to a JSON string happens in Create SalesOrder, at the point\n// it is needed: VTiger wants `element` as a string in a form-urlencoded body.\n// Keeping it an object here means the node's output stays readable.\nreturn [{ json: { element } }];"
       },
       "id": "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
       "name": "Build SalesOrder",
@@ -153,7 +153,7 @@
       "typeVersion": 2,
       "position": [
         704,
-        -96
+        -16
       ]
     },
     {
@@ -183,7 +183,8 @@
               "neverError": true,
               "responseFormat": "json"
             }
-          }
+          },
+          "timeout": 60000
         }
       },
       "id": "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
@@ -191,15 +192,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        928,
-        -96
+        896,
+        -16
       ],
       "credentials": {
         "httpBasicAuth": {
           "id": "jLqvj3hkJtbYAjcd",
           "name": "vtiger API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -240,8 +242,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1152,
-        -96
+        1168,
+        -80
       ]
     },
     {
@@ -306,23 +308,6 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'error', errors: ['Sales order could not be created in CRM'], detail: $('Create SalesOrder').item.json.statusMessage } }}",
-        "options": {
-          "responseCode": 502
-        }
-      },
-      "id": "1c6e285f-6196-4487-ab20-c3cf4fec4d0e",
-      "name": "Respond CRM Error",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        2176,
-        176
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
         "responseBody": "={{ { status: 'rejected', errors: $json.errors } }}",
         "options": {
           "responseCode": 422
@@ -352,8 +337,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -1488,
-        -240
+        -1584,
+        -160
       ],
       "id": "951986e2-4f7a-4675-9971-64616557d9d0",
       "name": "Load Config"
@@ -384,8 +369,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2496,
-        -224
+        2464,
+        -32
       ],
       "alwaysOutputData": true
     },
@@ -428,8 +413,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2720,
-        -224
+        2688,
+        -32
       ]
     },
     {
@@ -445,8 +430,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2944,
-        160
+        3040,
+        96
       ]
     },
     {
@@ -528,8 +513,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2944,
-        -32
+        3040,
+        -96
       ],
       "credentials": {
         "stripeApi": {
@@ -576,8 +561,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3168,
-        -32
+        3312,
+        -80
       ]
     },
     {
@@ -634,8 +619,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3552,
-        256
+        3584,
+        80
       ]
     },
     {
@@ -652,8 +637,12 @@
         "filters": {
           "conditions": [
             {
-              "keyName": "customer_id",
-              "keyValue": "={{ String($json.body.customerId) }}"
+              "keyName": "api_key_hash",
+              "keyValue": "={{ $('Hash API Key').first().json.api_key_hash }}"
+            },
+            {
+              "keyName": "is_active",
+              "condition": "isTrue"
             }
           ]
         },
@@ -662,8 +651,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -1936,
-        -128
+        -2384,
+        -48
       ],
       "id": "9cc5d522-1d7c-4e99-86be-482235d9b086",
       "name": "Lookup Customer",
@@ -679,7 +668,7 @@
       "typeVersion": 2,
       "position": [
         256,
-        -96
+        -16
       ]
     },
     {
@@ -714,7 +703,7 @@
       "typeVersion": 2.3,
       "position": [
         480,
-        -96
+        -16
       ]
     },
     {
@@ -731,7 +720,7 @@
       "typeVersion": 1.5,
       "position": [
         704,
-        416
+        496
       ]
     },
     {
@@ -765,16 +754,16 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1696,
-        -224
+        -2128,
+        -48
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'rejected', errors: [ 'Customer ' + ($('Normalize Order').first().json.body.customerId ?? '(missing)') + ' is not known or is inactive' ] } }}",
+        "responseBody": "={\"error\": \"UNAUTHORIZED\"}",
         "options": {
-          "responseCode": 422
+          "responseCode": 401
         }
       },
       "id": "0591f887-2d82-4b79-bb96-33de06d681ad",
@@ -782,8 +771,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -1504,
-        32
+        -1856,
+        144
       ]
     },
     {
@@ -874,8 +863,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2336,
-        -32
+        -2800,
+        -48
       ],
       "id": "1221d0e6-6ad9-4465-9feb-752ba8e04c73",
       "name": "Normalize Order"
@@ -908,8 +897,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -2880,
-        -192
+        -3280,
+        -208
       ],
       "id": "663952ae-dcd8-496c-91fa-4504a230e78d",
       "name": "Has Order File?"
@@ -923,8 +912,8 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1.1,
       "position": [
-        -2512,
-        -272
+        -2976,
+        -288
       ],
       "id": "b2ffce25-64d8-4779-adc5-daf5f36ffd6d",
       "name": "Read Order File"
@@ -1251,8 +1240,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2032,
-        -320
+        1936,
+        -192
       ]
     },
     {
@@ -1268,15 +1257,15 @@
           "conditions": [
             {
               "keyName": "idem_key",
-              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+              "keyValue": "={{ $('Build Context').first().json.idem_key }}"
             }
           ]
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "FAILED_CRM",
-            "error_message": "={{ $('Create SalesOrder').item.json.statusMessage }}"
+            "status": "={{ $json.statusCode ? 'FAILED_CRM' : 'CRM_UNKNOWN' }}",
+            "error_message": "={{ $json.statusMessage ?? $json.error?.message ?? 'unknown CRM error' }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1311,8 +1300,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1984,
-        64
+        1808,
+        320
       ]
     },
     {
@@ -1385,6 +1374,241 @@
         5488,
         -240
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parses the presented API key. Hashing happens in the Crypto node —\nconst out = [];\n\nfor (const item of $input.all()) {\n  const h = item.json.headers ?? {};\n  const raw =\n    h[\"x-api-key\"] ??\n    (typeof h[\"authorization\"] === \"string\"\n      ? h[\"authorization\"].replace(/^Bearer\\s+/i, \"\")\n      : undefined);\n  const key = typeof raw === \"string\" ? raw.trim() : \"\";\n  const ok = key.length >= 20;\n\n  out.push({\n    json: {\n      ...item.json,\n      auth: {\n        ok,\n        reason: ok ? undefined : \"MISSING_OR_SHORT_KEY\",\n        key_to_hash: key,\n        key_prefix: key.slice(0, 12),\n        presented_customer_id: item.json.body?.customerId ?? null,\n      },\n    },\n    binary: item.binary,\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3856,
+        -208
+      ],
+      "id": "ffa5941a-165d-438f-8adb-350b1940382a",
+      "name": "Authenticate"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"UNAUTHORIZED\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3424,
+        32
+      ],
+      "id": "7931b99e-92cf-4c66-88b6-ecb1ffec073d",
+      "name": "Respond Unauthorized"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "96cb9c10-4c9f-4e8c-8503-b1e3b6debcff",
+              "leftValue": "={{ $('Authenticate').first().json.auth.presented_customer_id === null\n   || String($('Authenticate').first().json.auth.presented_customer_id)\n      === String($('Lookup Customer').first().json.customer_id) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1888,
+        -144
+      ],
+      "id": "aef82b01-1925-4b79-bfb1-4ee2766983f8",
+      "name": "Identity Matches?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"error\": \"IDENTITY MISMATCH\" }",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1584,
+        64
+      ],
+      "id": "6642fb8b-c058-4bb1-8864-d1ae642b56e7",
+      "name": "Identity Mismatch"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"CRM UNAVAILABLE\",\n  \"retryable\" : true\n}",
+        "options": {
+          "responseCode": 503,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Retry-After",
+                "value": "30"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2016,
+        -16
+      ],
+      "id": "2fe1420d-f17f-4194-a443-f64667104a01",
+      "name": "Respond CRM Unavailable"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "af315bee-37bf-4c71-8a20-febe856addef",
+              "leftValue": "={{ $json.statusCode === 429 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
+      "name": "Is CRM Error Retryable?"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        -16
+      ],
+      "id": "835d6c41-c465-4e60-9530-7f97692198b0",
+      "name": "Delete Claim"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'CRM_REJECTED', retryable: false } }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "1c6e285f-6196-4487-ab20-c3cf4fec4d0e",
+      "name": "Respond CRM Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2000,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f9bea1d3-23e1-480e-b29a-cf05579df6db",
+              "leftValue": "={{ $json.auth.ok }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3648,
+        -208
+      ],
+      "id": "72ea5b35-61c1-476f-a511-4c7a2afb2706",
+      "name": "If Key Present"
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.auth.key_to_hash }}",
+        "dataPropertyName": "api_key_hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -3456,
+        -224
+      ],
+      "id": "61cfbeff-c4af-4b59-8c40-61d88ab617c1",
+      "name": "Hash API Key"
     }
   ],
   "connections": {
@@ -1392,7 +1616,7 @@
       "main": [
         [
           {
-            "node": "Has Order File?",
+            "node": "Authenticate",
             "type": "main",
             "index": 0
           }
@@ -1474,6 +1698,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Record CRM Failure",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1488,7 +1719,7 @@
         ],
         [
           {
-            "node": "Record CRM Failure",
+            "node": "Is CRM Error Retryable?",
             "type": "main",
             "index": 0
           }
@@ -1652,7 +1883,7 @@
       "main": [
         [
           {
-            "node": "Load Config",
+            "node": "Identity Matches?",
             "type": "main",
             "index": 0
           }
@@ -1823,7 +2054,7 @@
       "main": [
         [
           {
-            "node": "Respond CRM Error",
+            "node": "Respond CRM Rejected",
             "type": "main",
             "index": 0
           }
@@ -1835,6 +2066,93 @@
         [
           {
             "node": "Respond Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate": {
+      "main": [
+        [
+          {
+            "node": "If Key Present",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identity Matches?": {
+      "main": [
+        [
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Identity Mismatch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is CRM Error Retryable?": {
+      "main": [
+        [
+          {
+            "node": "Delete Claim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record CRM Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Claim": {
+      "main": [
+        [
+          {
+            "node": "Respond CRM Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Key Present": {
+      "main": [
+        [
+          {
+            "node": "Hash API Key",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash API Key": {
+      "main": [
+        [
+          {
+            "node": "Has Order File?",
             "type": "main",
             "index": 0
           }
@@ -1862,20 +2180,6 @@
       "description": "Shapes the incoming order, prices it via the order.process sub-workflow, then checks whether it is valid"
     },
     {
-      "id": "5cce1068-c2f8-4884-8426-e3fe17d588aa",
-      "name": "Create CRM sales order",
-      "nodeIds": [
-        "071b8519-d437-4c31-9798-6f1c18632f42",
-        "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
-        "9415cbde-46f2-421c-a503-952fc08c7cba",
-        "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
-        "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
-        "f0c12b63-ff42-449d-92f8-e59ff6f99007",
-        "4f42a8c4-6d8a-4c51-889a-9e576a2e1859"
-      ],
-      "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
-    },
-    {
       "id": "63a93a3d-bb3b-409d-8f55-213b3667c576",
       "name": "Charge card on file",
       "nodeIds": [
@@ -1890,18 +2194,8 @@
       "description": "After the held sales order exists: charges the saved card, marks the order paid, or returns 402 and leaves it on hold"
     },
     {
-      "id": "91a91d0f-6a19-42dc-8e82-02d6ff42cb38",
-      "name": "load context from data tables",
-      "nodeIds": [
-        "9cc5d522-1d7c-4e99-86be-482235d9b086",
-        "743c93b6-8ca7-4c7a-ae04-ab45c6731d7d",
-        "951986e2-4f7a-4675-9971-64616557d9d0",
-        "0591f887-2d82-4b79-bb96-33de06d681ad"
-      ]
-    },
-    {
       "id": "7632e978-d49c-4d78-b00b-363078264339",
-      "name": "Group 1",
+      "name": "Upload datafiles",
       "nodeIds": [
         "f062981a-eefd-471d-9ac1-84afd9619226",
         "2e9b5bbd-4c0b-4406-b870-35c23a165670",
@@ -1912,12 +2206,44 @@
         "27b090cb-3872-44f6-9a32-64f12bc579c2",
         "8d9abb9b-2765-45b6-9876-7bfa9aa42547"
       ]
+    },
+    {
+      "id": "b401a4a6-caeb-4074-91fe-2bdc216cb965",
+      "name": "Load context from data table",
+      "nodeIds": [
+        "951986e2-4f7a-4675-9971-64616557d9d0",
+        "9cc5d522-1d7c-4e99-86be-482235d9b086",
+        "743c93b6-8ca7-4c7a-ae04-ab45c6731d7d",
+        "0591f887-2d82-4b79-bb96-33de06d681ad",
+        "aef82b01-1925-4b79-bfb1-4ee2766983f8",
+        "6642fb8b-c058-4bb1-8864-d1ae642b56e7"
+      ]
+    },
+    {
+      "id": "0930ff1f-aa6c-416f-ac5d-e7c63ffcc7ed",
+      "name": "Create CRM Order",
+      "nodeIds": [
+        "071b8519-d437-4c31-9798-6f1c18632f42",
+        "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
+        "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
+        "f0c12b63-ff42-449d-92f8-e59ff6f99007",
+        "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
+        "9415cbde-46f2-421c-a503-952fc08c7cba",
+        "4f42a8c4-6d8a-4c51-889a-9e576a2e1859",
+        "cd704ff0-2aef-4cd3-911b-d3fb3b6b29db",
+        "5a507ef1-9660-4b7f-bdb9-0b180be8b88f",
+        "2fe1420d-f17f-4194-a443-f64667104a01",
+        "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
+        "835d6c41-c465-4e60-9530-7f97692198b0",
+        "1c6e285f-6196-4487-ab20-c3cf4fec4d0e"
+      ],
+      "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
     }
   ],
   "pinData": {},
-  "versionId": "dba11adf-4749-441a-8b8d-0a63aa65f955",
-  "activeVersionId": "7b00b7d5-757c-4475-a406-88e9339b9213",
-  "versionCounter": 307,
+  "versionId": "0feb51ca-90a5-4276-b470-f148f4ef2a70",
+  "activeVersionId": "666d25a7-5c55-45eb-8f01-b11dba52203a",
+  "versionCounter": 500,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
