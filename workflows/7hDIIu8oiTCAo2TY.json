@@ -4,7 +4,7 @@
   "id": "7hDIIu8oiTCAo2TY",
   "name": "order.process",
   "description": null,
-  "active": true,
+  "active": false,
   "isArchived": false,
   "nodes": [
     {
@@ -93,8 +93,8 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "e544b7dd-1d02-44c8-a49e-914eea26be0c",
-  "activeVersionId": "e544b7dd-1d02-44c8-a49e-914eea26be0c",
+  "versionId": "f7972899-0aaf-44af-a8dd-b45b61a0b8c1",
+  "activeVersionId": null,
   "versionCounter": 39,
   "triggerCount": 0,
   "sourceWorkflowId": null,
