@@ -1,0 +1,2286 @@
+{
+  "updatedAt": "2026-11-04T20:32:11.013Z",
+  "createdAt": "2026-11-04T20:26:52.093Z",
+  "id": "2IiSVBfxfwX5oGlo",
+  "name": "order.submit_v2_backup",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "70dfca42-849b-40ec-8711-ffddd2bfecce",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": false
+        }
+      },
+      "id": "cc9a20ae-bb93-454a-84bf-ed88d5c8fc79",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -4128,
+        -208
+      ],
+      "webhookId": "70dfca42-849b-40ec-8711-ffddd2bfecce"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\n\n// Resolve the authenticated customer before deriving the idempotency key.\n// With key-based lookup, \"no row\" now means the key is unknown or revoked.\nconst cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nb.customerId = cust.customer_id;   // authenticated identity wins over the body\n\nconst idem_key = `${b.customerId}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    vtiger_contact_id: cust.vtiger_contact_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
+      },
+      "id": "1746c7e1-e504-4627-9dc9-8b7acd1815a3",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1232,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "7hDIIu8oiTCAo2TY",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/7hDIIu8oiTCAo2TY",
+          "cachedResultName": "order.process"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "0256a065-93f2-48fd-bb2d-232002b300f5",
+      "name": "Process Order",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        -1056,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "id": "05e7e099-0c37-492a-ba6e-52d6f2b38847"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "da4924f4-074e-4d7f-add8-cb7c73df5fb5",
+      "name": "Is Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/query",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ \"SELECT id, productname, cf_products_shortdescriptionnew, description FROM Products WHERE productname IN (\" + $('Process Order').first().json.line_items.map(l => \"'\" + l.product_number + \"'\").join(\",\") + \");\" }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "4eed3311-9ecf-4689-8b11-74f233c6e3ce",
+      "name": "Lookup Products",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        32,
+        -16
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ---- Pilot constants (move to customer config later) ----\n//const ADDRESS = { bill_street: 'TBD', ship_street: 'TBD' }; // confirm via /describe\n\nconst ctx    = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst lookup = $('Validate Product Lookup').first().json;\n\n//shipping and billing address come from the input JSON order\n// ---- Billing / shipping from the order payload ----\nconst clean = v => (v ?? '').toString().trim();\nconst fullName = a => [clean(a.firstName), clean(a.lastName)].filter(Boolean).join(' ');\n// --- US state code -> VTiger picklist value (full name, verified via /describe) ---\nconst US_STATES = {\n  AL:'Alabama', AK:'Alaska', AZ:'Arizona', AR:'Arkansas', CA:'California',\n  CO:'Colorado', CT:'Connecticut', DE:'Delaware', DC:'District of Columbia',\n  FL:'Florida', GA:'Georgia', HI:'Hawaii', ID:'Idaho', IL:'Illinois',\n  IN:'Indiana', IA:'Iowa', KS:'Kansas', KY:'Kentucky', LA:'Louisiana',\n  ME:'Maine', MD:'Maryland', MA:'Massachusetts', MI:'Michigan', MN:'Minnesota',\n  MS:'Mississippi', MO:'Missouri', MT:'Montana', NE:'Nebraska', NV:'Nevada',\n  NH:'New Hampshire', NJ:'New Jersey', NM:'New Mexico', NY:'New York',\n  NC:'North Carolina', ND:'North Dakota', OH:'Ohio', OK:'Oklahoma', OR:'Oregon',\n  PA:'Pennsylvania', RI:'Rhode Island', SC:'South Carolina', SD:'South Dakota',\n  TN:'Tennessee', TX:'Texas', UT:'Utah', VT:'Vermont', VA:'Virginia',\n  WA:'Washington', WV:'West Virginia', WI:'Wisconsin', WY:'Wyoming'\n};\n\n// Accept a 2-letter code (\"CA\"/\"ca\") or an already-full name (\"California\").\nconst stateName = v => {\n  const s = clean(v);\n  return US_STATES[s.toUpperCase()] ?? s;\n};\nconst bill = ctx.billing ?? {};\nconst ship = ctx.shipping ?? {};\nconst shipCompany = clean(ship.company);\nconst shipStateForTax = String(ship.state ?? '').trim().toUpperCase();\nconst isCA = shipStateForTax === 'CA' || shipStateForTax === 'CALIFORNIA';\n\nconst REQUIRED = ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode'];\nconst missing = [\n  ...REQUIRED.filter(k => !clean(bill[k])).map(k => `billing.${k}`),\n  ...REQUIRED.filter(k => !clean(ship[k])).map(k => `shipping.${k}`)\n];\nif (missing.length) throw new Error(`Missing address fields: ${missing.join(', ')}`);\n\n// Field names follow the Zapier implementation; confirm against /describe?elementType=SalesOrder\nconst ADDRESS = {\n  cf_salesorder_billtonamenew:    fullName(bill),\n  cf_salesorder_billtocompanynew: clean(bill.company),\n  cf_1497:                        clean(bill.phone),        // bill-to phone\n  bill_street:                    clean(bill.address1),\n  bill_pobox:                     clean(bill.address2),     // Zapier puts address line 2 here\n  bill_city:                      clean(bill.city),\n  bill_state:                     stateName(bill.state),\n  bill_code:                      clean(bill.postcode),\n  bill_country:                   clean(bill.country) || 'US',\n\n  cf_salesorder_shiptonamenew:    fullName(ship),\n  cf_salesorder_shiptocompanynew: clean(ship.company),\n  cf_1499:                        clean(ship.phone),        // ship-to phone\n  ship_street:                    clean(ship.address1),\n  ship_pobox:                     clean(ship.address2),\n  ship_city:                      clean(ship.city),\n  ship_state:                     stateName(ship.state),\n  ship_code:                      clean(ship.postcode),\n  ship_country:                   clean(ship.country) || 'US'\n};\n\n// CRM identity comes from configuration, not from constants in this node:\n// the account from the customer's api_customers row, the owner from env_config.\nif (!ctx.vtiger_account_id) {\n  throw new Error(`Customer ${ctx.customer_id} has no vtiger_account_id configured`);\n}\nif (!ctx.vtiger_assigned_user_id) {\n  throw new Error('env_config.vtiger_assigned_user_id is not set');\n}\n\n// Product Number -> VTiger Products record id, asserted complete upstream.\nconst idByProductNumber = lookup.by_product_number ?? {};\n\n// Invariant: every line item must carry a CRM product id. This is only\n// reachable if the lookup validation is bypassed, so fail loudly rather than\n// create a sales order whose lines reference no product.\nconst unresolved = priced.line_items\n  .filter(l => !idByProductNumber[String(l.product_number).trim()])\n  .map(l => `${l.sku} (Product Number ${l.product_number})`);\nif (unresolved.length) {\n  throw new Error(`No VTiger product id resolved for: ${unresolved.join('; ')}`);\n}\n\n// jobName comes from the original order payload, keyed by sku.\n// order.process consolidates duplicate skus, so keep every distinct job name.\nconst jobNamesBySku = new Map();\nfor (const li of (ctx.lineItems ?? [])) {\n  const sku = String(li.sku ?? '').trim();\n  const job = String(li.jobName ?? '').trim();\n  if (!sku || !job) continue;\n  const prev = jobNamesBySku.get(sku);\n  if (!prev) jobNamesBySku.set(sku, job);\n  else if (!prev.split(' | ').includes(job)) jobNamesBySku.set(sku, `${prev} | ${job}`);\n}\n\n// If the order carries a single distinct job name, apply it to every line.\nconst distinctJobs = [...new Set([...jobNamesBySku.values()])];\nconst orderJob = distinctJobs.length === 1 ? distinctJobs[0] : '';\n// Work Location: input uses -FAC / -CSB; VTiger cf_2030 uses named locations.\nconst WORK_LOCATION = {\n  FAC: 'China Factory',\n  CSB: 'USA Service Bureau'\n};\nconst workLocationKey = String(ctx.workLocation ?? '').trim().toUpperCase();\nconst workLocation = workLocationKey ? WORK_LOCATION[workLocationKey] : '';\nif (workLocationKey && !workLocation) {\n  throw new Error(`Unknown workLocation '${ctx.workLocation}' (expected FAC or CSB)`);\n}\nconst transshipmentNeeded = workLocationKey === 'FAC' ? '1' : '0';\nconst element = {\n  //subject: `Order ${ctx.order_id} / PO ${ctx.customer_reference_number}`,\n    subject: shipCompany\n    ? `Order ${ctx.customer_reference_number} to ${shipCompany}`\n    : `Order ${ctx.customer_reference_number}`,\n  account_id: ctx.vtiger_account_id,\n  contact_id: ctx.vtiger_contact_id,\n  cf_salesorder_datamanagementrequired: 'Yes',\n  cf_salesorder_usecustomershippingaccount: 'Yes',\n  assigned_user_id: ctx.vtiger_assigned_user_id,\n  sostatus: 'Created',\n  cf_843: 'API Order',  \n  cf_2030: workLocation,\n  cf_salesorder_transshipmentneeded: transshipmentNeeded,\n  vtiger_purchaseorder: ctx.customer_reference_number,\n  customerno: ctx.order_id,          // your order id as external reference\n  ...ADDRESS,\n  hdnTaxType: 'group',\n  region_id: isCA ? 1 : 0,\n  LineItems: priced.line_items.map(l => {\n    const pn = String(l.product_number).trim();\n    //const job = jobNamesBySku.get(String(l.sku).trim()) ?? '';\n    const job = jobNamesBySku.get(String(l.sku).trim()) || orderJob;\n    const shortDesc = lookup.short_description_by_product_number?.[pn] ?? '';\n    const itemName = shortDesc || l.title;          // fallback to catalog title if empty\n    const longDesc = lookup.long_description_by_product_number?.[pn] ?? '';\n    const orderRef = ctx.customer_reference_number;\n    const jobNameValue = `${job ? `${job} ${itemName}` : itemName}${orderRef ? ` - ${orderRef}` : ''}`;\n    const suffix = [orderRef, job].filter(Boolean).join('  to ');\n    const comment = longDesc ? (suffix ? `${longDesc} - ${suffix}` : longDesc) : '';\n    return {\n      productid: idByProductNumber[pn],\n      quantity: l.quantity,\n      listprice: (l.unit_amount_cents / 100).toFixed(2),\n      tax4: isCA ? '7.25000' : '0.00000',\n      //cf_salesorder_jobname: job ? `${job} ${itemName}` : itemName,\n      cf_salesorder_jobname: jobNameValue,\n      comment\n    };\n  })\n};\n\n// Serialisation to a JSON string happens in Create SalesOrder, at the point\n// it is needed: VTiger wants `element` as a string in a form-urlencoded body.\n// Keeping it an object here means the node's output stays readable.\nreturn [{ json: { element } }];"
+      },
+      "id": "e88e9fa2-3616-47d0-9249-0449b7d5ddcc",
+      "name": "Build SalesOrder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "elementType",
+              "value": "SalesOrder"
+            },
+            {
+              "name": "element",
+              "value": "={{ JSON.stringify($json.element) }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "91072a29-b14e-4f4b-9ff6-b98a76610100",
+      "name": "Create SalesOrder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        -16
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              },
+              "id": "1ab84eb5-0494-4d5e-8569-06293d55d9c5"
+            },
+            {
+              "leftValue": "={{ $json.body.success }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "d2594e43-7240-4ed6-bf32-f3129623ef6c"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "bea657dc-4d3f-46d1-90c7-d2ad7bb38f5e",
+      "name": "SO Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1168,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $('Build Context').first().json;\n\n// Students live on the line items (lineItems[].personalizationData[]).\n// Orders may legitimately carry no students at all.\nconst students = (order.lineItems ?? []).flatMap(li =>\n  (li.personalizationData ?? []).map(s => ({\n    studentId: s.studentId ?? '',\n    firstName: s.firstName ?? '',\n    lastName:  s.lastName  ?? ''\n  }))\n).filter(s => s.studentId || s.firstName || s.lastName);\n\nconst has_students = students.length > 0;\nconst flags = {\n  has_students,\n  art_work_provided: order.art_work_provided === true\n};\n\nconst rows = students.map(s => ({ json: { ...s, ...flags } }));\n\n// A zero-item result stops this branch (Students CSV -> Build Uploads -> ...\n// -> Respond Created would be skipped) and the caller would get no 201 for an\n// order that has already been created and charged. Always emit at least one\n// item so the response path always runs; the sentinel is not treated as a\n// student by Build Uploads (has_students is false).\nreturn rows.length\n  ? rows\n  : [{ json: { studentId: '', firstName: '', lastName: '', ...flags } }];"
+      },
+      "id": "3666e0fd-f241-4af0-91cc-739958637188",
+      "name": "Students",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3248,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "={{ $('Build Context').first().json.order_id }}_students.csv"
+        }
+      },
+      "id": "9584732c-073c-466d-af2d-5f11745f0021",
+      "name": "Students CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        3472,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
+      },
+      "id": "8e96a6de-b69a-4970-9163-a4220f36bb23",
+      "name": "Build Confirmation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4368,
+        -128
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Build Confirmation').item.json }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "9c805ef0-db5e-4d24-9ae6-ff7450507425",
+      "name": "Respond Created",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4960,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'rejected', errors: $json.errors } }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "id": "e27aaf7f-eec5-4669-8eea-3a7c215d057e",
+      "name": "Respond Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -384,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "uDUAbEkoO1f4k2zX",
+          "mode": "list",
+          "cachedResultName": "env_config",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/uDUAbEkoO1f4k2zX"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -1648,
+        -160
+      ],
+      "id": "21b82a14-fecd-4a6d-a697-dcf5796f9dd7",
+      "name": "Load Config"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "R5qrBqVvgf8IB7uS",
+          "mode": "list",
+          "cachedResultName": "api_customers",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ $('Build Context').item.json.customer_id }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "9910567f-8824-4771-9c7c-5bc0d1669c16",
+      "name": "Get Stripe Customer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1232,
+        64
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d94dc1a1-4c4f-4d22-b829-24d41274eafb",
+      "name": "Has Card on File?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\":\"payment_failed\",\"errors\":[\"No payment method on file for this customer\"]}",
+        "options": {
+          "responseCode": 402
+        }
+      },
+      "id": "353ba196-bfa1-4f9a-b650-2e4e84b98c0c",
+      "name": "Respond No Card",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1808,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/payment_intents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "stripeApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $('Build Context').item.json.idem_key }}:payment"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "amount",
+              "value": "={{ $('Compute Tax').item.json.total_with_tax_cents }}"
+            },
+            {
+              "name": "currency",
+              "value": "usd"
+            },
+            {
+              "name": "customer",
+              "value": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}"
+            },
+            {
+              "name": "payment_method",
+              "value": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}"
+            },
+            {
+              "name": "off_session",
+              "value": "true"
+            },
+            {
+              "name": "confirm",
+              "value": "true"
+            },
+            {
+              "name": "capture_method",
+              "value": "automatic"
+            },
+            {
+              "name": "description",
+              "value": "=Order {{ $('Build Context').item.json.order_id }}"
+            },
+            {
+              "name": "metadata[order_id]",
+              "value": "={{ $('Build Context').item.json.order_id }}"
+            },
+            {
+              "name": "metadata[customer_id]",
+              "value": "={{ $('Build Context').item.json.customer_id }}"
+            },
+            {
+              "name": "metadata[customer_reference_number]",
+              "value": "={{ $('Build Context').item.json.customer_reference_number }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "804f3e3f-67a6-4a09-a96f-d3b001d53cb3",
+      "name": "Create Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1808,
+        0
+      ],
+      "credentials": {
+        "stripeApi": {
+          "id": "WMHjTKO19ynUAUR6",
+          "name": "Stripe - fbt-dev"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ [\"succeeded\", \"processing\"] }}",
+              "rightValue": "={{ $json.body.status }}",
+              "operator": {
+                "type": "array",
+                "operation": "contains",
+                "rightType": "any"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "a5622eef-494b-4dae-865f-30c1e72e0644",
+      "name": "Payment OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2080,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/revise",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "elementType",
+              "value": "SalesOrder"
+            },
+            {
+              "name": "element",
+              "value": "={{ JSON.stringify({ id: $('Create SalesOrder').item.json.body.result.id, sostatus: \"Created\", cf_1311: \"Payment Received in Full\", cf_1283: new Date().toISOString().slice(0, 10), cf_1315: `payment collected via card on file (Stripe) - ${$json.body.id}` }) }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "51c3d9bf-ad3e-422e-8249-25f316c46d22",
+      "name": "Mark SO Paid",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2352,
+        -32
+      ],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'payment_failed', errors: [ $json.body?.error?.message ?? 'Payment failed' ], decline_code: $json.body?.error?.decline_code ?? null } }}",
+        "options": {
+          "responseCode": 402
+        }
+      },
+      "id": "fcccb1e5-d491-441d-a342-82239350f0bd",
+      "name": "Respond Payment Failed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2352,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "R5qrBqVvgf8IB7uS",
+          "mode": "list",
+          "cachedResultName": "api_customers",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "api_key_hash",
+              "keyValue": "={{ $('Hash API Key').first().json.api_key_hash }}"
+            },
+            {
+              "keyName": "is_active",
+              "condition": "isTrue"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -2448,
+        -48
+      ],
+      "id": "f60c68d9-4c44-420f-a5fc-58ddb60c6302",
+      "name": "Lookup Customer",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate the VTiger Products query before anything is built from it.\n//\n// VTiger's query API is quietly tolerant in three separate ways, none of which\n// is an error at the transport level:\n//   * an unmatched lookup answers HTTP 200 with {\"success\": true, \"result\": []}\n//   * a column that does not exist comes back as \"\" instead of failing\n//   * responses are served as text/html, so the HTTP node may hand back the raw\n//     text under `data` rather than a parsed object under `body`\n// Every one of those would silently produce a sales order with no product on\n// its lines, so nothing downstream may proceed on an unverified lookup.\nconst raw = $input.first().json;\nconst wanted = [...new Set(\n  $('Process Order').first().json.line_items.map(l => String(l.product_number).trim())\n)];\n\nconst fail = (reason) => [{ json: { ok: false, lookup_error: reason } }];\n\n// Lookup Products requests responseFormat=json; fall back to parsing raw `data`\n// so that a node copied from elsewhere still fails loudly instead of silently.\nlet payload = raw.body !== undefined ? raw.body : raw.data;\nif (typeof payload === 'string') {\n  try {\n    payload = payload.trim() === '' ? null : JSON.parse(payload);\n  } catch {\n    payload = null;\n  }\n}\n\nif (raw.statusCode !== undefined && raw.statusCode !== 200) {\n  return fail(`VTiger Products query failed with HTTP ${raw.statusCode}${raw.statusMessage ? ' ' + raw.statusMessage : ''}`);\n}\nif (payload === null || typeof payload !== 'object') {\n  return fail('VTiger Products query returned a response that is not JSON');\n}\nif (payload.success !== true) {\n  return fail(`VTiger Products query was rejected: ${JSON.stringify(payload.error ?? payload)}`);\n}\nif (!Array.isArray(payload.result)) {\n  return fail('VTiger Products query returned no result array');\n}\nif (payload.result.length === 0) {\n  return fail(`VTiger has no Products matching: ${wanted.join(', ')}`);\n}\nif (payload.result.some(r => r.productname === undefined || r.productname === null)) {\n  return fail('VTiger response is missing the productname column');\n}\n\nconst byProductNumber = {};\nconst shortDescriptionByProductNumber = {};\nconst longDescriptionByProductNumber = {};\nfor (const r of payload.result) {\n  const name = String(r.productname).trim();\n  if (!name || !r.id) continue;\n  byProductNumber[name] = r.id;\n  shortDescriptionByProductNumber[name] = String(r.cf_products_shortdescriptionnew ?? '').trim();\n  longDescriptionByProductNumber[name] = String(r.description ?? '').trim();\n}\n\nconst missing = wanted.filter(n => !byProductNumber[n]);\nif (missing.length) {\n  return fail(`Product Number(s) not found in VTiger Products: ${missing.join(', ')}`);\n}\n\nreturn [{ json: {\n  ok: true,\n  by_product_number: byProductNumber,\n  short_description_by_product_number: shortDescriptionByProductNumber,\n  long_description_by_product_number: longDescriptionByProductNumber,\n  matched_count: payload.result.length\n} }];"
+      },
+      "id": "3dacb0b8-8dc9-414a-bf04-693e62c6aeb5",
+      "name": "Validate Product Lookup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d3088ddc-13a4-484a-a90b-fff70710e78a",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f3434a97-2c44-4440-a4cd-1b72f16c3b61",
+      "name": "Lookup OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        480,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'error', errors: [ $json.lookup_error ?? 'Product lookup failed' ] } }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "bc09c0a4-2661-45a3-9687-e722ec4be73e",
+      "name": "Respond Lookup Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        704,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3d2e70a1-2efc-44d8-8e9e-128e22cfe831",
+              "leftValue": "={{ $json.customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "2ab24101-49c3-4a27-8510-01f8e4e3d8a0",
+      "name": "Customer Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2192,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"error\": \"UNAUTHORIZED\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "101ef5a1-a633-4d11-a5ea-0bb99160d5a7",
+      "name": "Respond Unknown Customer",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1920,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Context').first().json;\n\n// The VTiger order number returned on creation, e.g. \"1234\" -> \"1234.png\"/\"1234.csv\".\n// If the CRM step was skipped (dry run with no CRM/Stripe), fall back to the\n// internal order id so the upload path stays testable.\nlet so = {};\ntry {\n  so = $('Create SalesOrder').first().json.body?.result ?? {};\n} catch (e) { /* Create SalesOrder did not run */ }\nconst orderNo = so.salesorder_no ?? so.id ?? ctx.order_id;\n\nconst hasStudents = $('Students').first().json.has_students === true;\nconst hasArtwork  = ctx.art_work_provided === true;\n\nconst items = [];\n\n// Students CSV -> \"<vtiger order number>.csv\"\nif (hasStudents) {\n  const csv = $input.first()?.binary?.data;\n  if (csv) {\n    items.push({ json: { upload_file_name: `${orderNo}.csv` }, binary: { data: csv } });\n  }\n}\n\n// artWork -> \"<vtiger order number>.<ext>\"  (reads the original upload; the\n// binary does not survive Process Order, so it is taken from the Webhook node)\nif (hasArtwork) {\n  const art = $('Webhook').first().binary?.artWork;\n  if (art) {\n    items.push({ json: { upload_file_name: `${orderNo}.${ctx.art_work_extension}` }, binary: { data: art } });\n  }\n}\n\n// Nothing to upload -> emit a single marker so the branch continues to the\n// confirmation instead of dead-ending.\nif (!items.length) {\n  return [{ json: { has_upload: false, order_number: orderNo } }];\n}\nreturn items.map(i => ({ json: { ...i.json, has_upload: true, order_number: orderNo }, binary: i.binary }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3696,
+        -128
+      ],
+      "id": "f2785ded-7a94-47c9-b3f8-a528e15d95a2",
+      "name": "Build Uploads"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_upload }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3904,
+        -112
+      ],
+      "id": "20408be5-25e1-4dd5-8206-61d1fd165783",
+      "name": "Anything to upload?"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.upload_file_name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "14w3wyhnpJSx76utux9PYqmIXuYFUzpwW",
+          "mode": "list",
+          "cachedResultName": "Kitetags",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/14w3wyhnpJSx76utux9PYqmIXuYFUzpwW"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4144,
+        -128
+      ],
+      "id": "bab785be-50f7-4416-890b-a59150e965f7",
+      "name": "Upload to Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SzrvR3BMldz3I1CS",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Webhook').first();\nconst headers = webhook.json.headers ?? {};\nconst is_multipart = String(headers['content-type'] ?? '').toLowerCase().startsWith('multipart/form-data');\n\n// multipart/form-data parts are flat, so the nested order payload rides in a\n// single part named `order` - as a TEXT field (paste the JSON) or as an\n// uploaded .json FILE (read by the `Read Order File` node). It is merged over\n// any flat form fields so the rest of the workflow sees the same canonical\n// `body` shape it would get from an application/json request.\nlet body = (webhook.json.body && typeof webhook.json.body === 'object') ? webhook.json.body : {};\n\nif (is_multipart) {\n  let raw = null;\n  if (typeof body.order === 'string') {\n    raw = body.order;                                   // `order` sent as a text field\n  } else {\n    try {\n      const read = $('Read Order File').first().json;   // set only when a file was read\n      if (typeof read?.data === 'string') raw = read.data;\n    } catch (e) { /* Read Order File did not run: there was no order file */ }\n  }\n  if (raw !== null) {\n    let parsed;\n    try {\n      parsed = JSON.parse(raw);\n    } catch (e) {\n      throw new Error(`multipart part 'order' is not valid JSON: ${e.message}`);\n    }\n    const { order, ...rest } = body;   // drop the raw part; do not carry it downstream\n    body = { ...rest, ...parsed };\n  }\n}\n\nreturn [{ json: { ...webhook.json, body, is_multipart } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2800,
+        -48
+      ],
+      "id": "a5cfd8b4-d531-4586-a75f-75ed22e05b26",
+      "name": "Normalize Order"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$binary.order }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "a4ea6cb8-a035-4666-8512-74dbafc0320c"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3280,
+        -208
+      ],
+      "id": "f6920074-d36e-4ffb-8541-46189418f8d7",
+      "name": "Has Order File?"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "order",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -2976,
+        -288
+      ],
+      "id": "24423a4f-6da4-43fb-a95b-5388ba35f38f",
+      "name": "Read Order File"
+    },
+    {
+      "parameters": {
+        "operation": "rowExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        }
+      },
+      "id": "005362bf-4a3d-4cf0-bb52-59af5ab99f5d",
+      "name": "If Ledger Row Exists",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        -384
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "158dc099-305c-4294-987a-dc1fbbc4ccd0",
+      "name": "Get Ledger Row",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -224,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.response_json }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "62e16292-608f-4cc3-8211-1c48a9dc1013",
+      "name": "Has Stored Response?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.parse($json.response_json) }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "id": "4c6c23b4-daac-4f97-a949-a3c62cd60ccd",
+      "name": "Respond Replay",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { status: 'duplicate', message: 'Order already submitted', order_id: $json.order_id, salesorder_no: $json.vtiger_so_number } }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "id": "aac81318-2cdc-4043-a36c-f266d08ea6e4",
+      "name": "Respond In Progress",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        592,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        }
+      },
+      "id": "70fec8e3-733a-4663-8c1b-d4760818b360",
+      "name": "If Ledger Row Missing",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -448,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idem_key": "={{ $('Build Context').item.json.idem_key }}",
+            "order_id": "={{ $('Build Context').item.json.order_id }}",
+            "customer_id": "={{ $('Build Context').item.json.customer_id }}",
+            "customer_reference_number": "={{ $('Build Context').item.json.customer_reference_number }}",
+            "reference_url": "={{ $('Build Context').item.json.reference_url }}",
+            "status": "PROCESSING",
+            "amount_cents": "={{ String($('Compute Tax').first().json.total_with_tax_cents) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1dc51334-9d1f-46d8-8b65-9cf3eb4515ba",
+      "name": "Claim Ledger",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "SO_CREATED",
+            "vtiger_so_id": "={{ $('Create SalesOrder').item.json.body.result.id }}",
+            "vtiger_so_number": "={{ $('Create SalesOrder').item.json.body.result.salesorder_no }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "f30b52bc-fd77-4429-8e7f-4a86100e5743",
+      "name": "Record SO Created",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1936,
+        -192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "={{ $json.statusCode ? 'FAILED_CRM' : 'CRM_UNKNOWN' }}",
+            "error_message": "={{ $json.statusMessage ?? $json.error?.message ?? 'unknown CRM error' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "e20d0df8-218c-4a4c-a9b4-f40df19501cf",
+      "name": "Record CRM Failure",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "order_ledger",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "COMPLETED",
+            "stripe_pi_id": "={{ $('Create Payment').item.json.body.id }}",
+            "response_json": "={{ JSON.stringify($json) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "efcf3264-292c-4e92-95a6-b47081770418",
+      "name": "Record Completed",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        4656,
+        -128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parses the presented API key. Hashing happens in the Crypto node —\nconst out = [];\n\nfor (const item of $input.all()) {\n  const h = item.json.headers ?? {};\n  const raw =\n    h[\"x-api-key\"] ??\n    (typeof h[\"authorization\"] === \"string\"\n      ? h[\"authorization\"].replace(/^Bearer\\s+/i, \"\")\n      : undefined);\n  const key = typeof raw === \"string\" ? raw.trim() : \"\";\n  const ok = key.length >= 20;\n\n  out.push({\n    json: {\n      ...item.json,\n      auth: {\n        ok,\n        reason: ok ? undefined : \"MISSING_OR_SHORT_KEY\",\n        key_to_hash: key,\n        key_prefix: key.slice(0, 12),\n        presented_customer_id: item.json.body?.customerId ?? null,\n      },\n    },\n    binary: item.binary,\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3856,
+        -208
+      ],
+      "id": "00dff086-4a36-4436-a6e5-8180dd8b3f79",
+      "name": "Authenticate"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"UNAUTHORIZED\"\n}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3424,
+        32
+      ],
+      "id": "e7cbf4a9-0faf-4a7e-a960-817b00567659",
+      "name": "Respond Unauthorized"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "96cb9c10-4c9f-4e8c-8503-b1e3b6debcff",
+              "leftValue": "={{ $('Authenticate').first().json.auth.presented_customer_id === null\n   || String($('Authenticate').first().json.auth.presented_customer_id)\n      === String($('Lookup Customer').first().json.customer_id) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1952,
+        -144
+      ],
+      "id": "9565392c-0d91-4dc9-ae17-034d26c2543a",
+      "name": "Identity Matches?"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"error\": \"IDENTITY MISMATCH\" }",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1648,
+        64
+      ],
+      "id": "5f72742a-dee1-486c-a17f-75a1ff3c459a",
+      "name": "Identity Mismatch"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"error\": \"CRM UNAVAILABLE\",\n  \"retryable\" : true\n}",
+        "options": {
+          "responseCode": 503,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Retry-After",
+                "value": "30"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2016,
+        -16
+      ],
+      "id": "fc6865bf-8936-4cbc-807a-dedda304f760",
+      "name": "Respond CRM Unavailable"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "af315bee-37bf-4c71-8a20-febe856addef",
+              "leftValue": "={{ $json.statusCode === 429 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "b2f63092-b6bc-484b-9fe1-06ee16b0b845",
+      "name": "Is CRM Error Retryable?"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1808,
+        -16
+      ],
+      "id": "e0751c32-e7f4-4d0f-aed6-217a804f854e",
+      "name": "Delete Claim"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'CRM_REJECTED', retryable: false } }}",
+        "options": {
+          "responseCode": 502
+        }
+      },
+      "id": "2d1218b5-bd5b-4d78-9ffb-cae8ce3244e1",
+      "name": "Respond CRM Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2000,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f9bea1d3-23e1-480e-b29a-cf05579df6db",
+              "leftValue": "={{ $json.auth.ok }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3648,
+        -208
+      ],
+      "id": "77fee0e4-18e9-4d9b-b92b-108e1ddd8b11",
+      "name": "If Key Present"
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.auth.key_to_hash }}",
+        "dataPropertyName": "api_key_hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -3456,
+        -224
+      ],
+      "id": "c33c553e-8b60-4230-908c-26e4dffb3461",
+      "name": "Hash API Key"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fixed-rate sales tax: 7.25% only when the ship-to state is California.\n// Match VTiger's calculation: apply the rate per line, sum, then round to cents.\nconst priced = $input.first().json;\nconst shipping = $('Build Context').first().json.shipping ?? {};\nconst stateRaw = String(shipping.state ?? '').trim().toUpperCase();\nconst isCA = stateRaw === 'CA' || stateRaw === 'CALIFORNIA';\nconst TAX_RATE = 0.0725;\nconst subtotal_cents = Number(priced.total_cents ?? 0);\nconst tax_exact_cents = isCA\n  ? priced.line_items.reduce((sum, l) => sum + Number(l.line_total_cents ?? 0) * TAX_RATE, 0)\n  : 0;\nconst tax_cents = Math.round(tax_exact_cents);\nconst total_with_tax_cents = subtotal_cents + tax_cents;\n\nreturn [{ json: {\n  ...priced,\n  subtotal_cents,\n  tax_cents,\n  tax_rate: isCA ? TAX_RATE : 0,\n  total_with_tax_cents,\n  tax_state: stateRaw\n} }];\n"
+      },
+      "id": "7d18758a-0eba-4996-8807-502d9dcc7bde",
+      "name": "Compute Tax",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        -48
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Authenticate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Context": {
+      "main": [
+        [
+          {
+            "node": "Process Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Order": {
+      "main": [
+        [
+          {
+            "node": "Compute Tax",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid": {
+      "main": [
+        [
+          {
+            "node": "If Ledger Row Exists",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Ledger Row Missing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Products": {
+      "main": [
+        [
+          {
+            "node": "Validate Product Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build SalesOrder": {
+      "main": [
+        [
+          {
+            "node": "Create SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create SalesOrder": {
+      "main": [
+        [
+          {
+            "node": "SO Created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record CRM Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SO Created": {
+      "main": [
+        [
+          {
+            "node": "Record SO Created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is CRM Error Retryable?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Students": {
+      "main": [
+        [
+          {
+            "node": "Students CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Students CSV": {
+      "main": [
+        [
+          {
+            "node": "Build Uploads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Record Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Config": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stripe Customer": {
+      "main": [
+        [
+          {
+            "node": "Has Card on File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Card on File?": {
+      "main": [
+        [
+          {
+            "node": "Create Payment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond No Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Payment": {
+      "main": [
+        [
+          {
+            "node": "Payment OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment OK?": {
+      "main": [
+        [
+          {
+            "node": "Mark SO Paid",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark SO Paid": {
+      "main": [
+        [
+          {
+            "node": "Students",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Product Lookup": {
+      "main": [
+        [
+          {
+            "node": "Lookup OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup OK?": {
+      "main": [
+        [
+          {
+            "node": "Build SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Lookup Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Customer": {
+      "main": [
+        [
+          {
+            "node": "Customer Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Found?": {
+      "main": [
+        [
+          {
+            "node": "Identity Matches?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unknown Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Uploads": {
+      "main": [
+        [
+          {
+            "node": "Anything to upload?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything to upload?": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Order": {
+      "main": [
+        [
+          {
+            "node": "Lookup Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Order File?": {
+      "main": [
+        [
+          {
+            "node": "Read Order File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Normalize Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Order File": {
+      "main": [
+        [
+          {
+            "node": "Normalize Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Ledger Row Exists": {
+      "main": [
+        [
+          {
+            "node": "Get Ledger Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ledger Row": {
+      "main": [
+        [
+          {
+            "node": "Has Stored Response?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Stored Response?": {
+      "main": [
+        [
+          {
+            "node": "Respond Replay",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Ledger Row Missing": {
+      "main": [
+        [
+          {
+            "node": "Claim Ledger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim Ledger": {
+      "main": [
+        [
+          {
+            "node": "Lookup Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record SO Created": {
+      "main": [
+        [
+          {
+            "node": "Get Stripe Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record CRM Failure": {
+      "main": [
+        [
+          {
+            "node": "Respond CRM Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Completed": {
+      "main": [
+        [
+          {
+            "node": "Respond Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate": {
+      "main": [
+        [
+          {
+            "node": "If Key Present",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identity Matches?": {
+      "main": [
+        [
+          {
+            "node": "Load Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Identity Mismatch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is CRM Error Retryable?": {
+      "main": [
+        [
+          {
+            "node": "Delete Claim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record CRM Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Claim": {
+      "main": [
+        [
+          {
+            "node": "Respond CRM Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Key Present": {
+      "main": [
+        [
+          {
+            "node": "Hash API Key",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unauthorized",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash API Key": {
+      "main": [
+        [
+          {
+            "node": "Has Order File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compute Tax": {
+      "main": [
+        [
+          {
+            "node": "Is Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [
+    {
+      "id": "63a93a3d-bb3b-409d-8f55-213b3667c576",
+      "name": "Charge card on file",
+      "nodeIds": [
+        "9910567f-8824-4771-9c7c-5bc0d1669c16",
+        "d94dc1a1-4c4f-4d22-b829-24d41274eafb",
+        "353ba196-bfa1-4f9a-b650-2e4e84b98c0c",
+        "804f3e3f-67a6-4a09-a96f-d3b001d53cb3",
+        "a5622eef-494b-4dae-865f-30c1e72e0644",
+        "fcccb1e5-d491-441d-a342-82239350f0bd",
+        "51c3d9bf-ad3e-422e-8249-25f316c46d22"
+      ],
+      "description": "After the held sales order exists: charges the saved card, marks the order paid, or returns 402 and leaves it on hold"
+    },
+    {
+      "id": "7632e978-d49c-4d78-b00b-363078264339",
+      "name": "Upload datafiles",
+      "nodeIds": [
+        "3666e0fd-f241-4af0-91cc-739958637188",
+        "9584732c-073c-466d-af2d-5f11745f0021",
+        "8e96a6de-b69a-4970-9163-a4220f36bb23",
+        "9c805ef0-db5e-4d24-9ae6-ff7450507425",
+        "f2785ded-7a94-47c9-b3f8-a528e15d95a2",
+        "20408be5-25e1-4dd5-8206-61d1fd165783",
+        "bab785be-50f7-4416-890b-a59150e965f7",
+        "efcf3264-292c-4e92-95a6-b47081770418"
+      ]
+    },
+    {
+      "id": "0930ff1f-aa6c-416f-ac5d-e7c63ffcc7ed",
+      "name": "Create CRM Order",
+      "nodeIds": [
+        "4eed3311-9ecf-4689-8b11-74f233c6e3ce",
+        "e88e9fa2-3616-47d0-9249-0449b7d5ddcc",
+        "91072a29-b14e-4f4b-9ff6-b98a76610100",
+        "bea657dc-4d3f-46d1-90c7-d2ad7bb38f5e",
+        "3dacb0b8-8dc9-414a-bf04-693e62c6aeb5",
+        "f3434a97-2c44-4440-a4cd-1b72f16c3b61",
+        "bc09c0a4-2661-45a3-9687-e722ec4be73e",
+        "f30b52bc-fd77-4429-8e7f-4a86100e5743",
+        "e20d0df8-218c-4a4c-a9b4-f40df19501cf",
+        "fc6865bf-8936-4cbc-807a-dedda304f760",
+        "b2f63092-b6bc-484b-9fe1-06ee16b0b845",
+        "e0751c32-e7f4-4d0f-aed6-217a804f854e",
+        "2d1218b5-bd5b-4d78-9ffb-cae8ce3244e1"
+      ],
+      "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
+    },
+    {
+      "id": "ab2734d7-5fb0-489e-900f-755dda3a94e3",
+      "name": "Price order",
+      "nodeIds": [
+        "1746c7e1-e504-4627-9dc9-8b7acd1815a3",
+        "0256a065-93f2-48fd-bb2d-232002b300f5",
+        "da4924f4-074e-4d7f-add8-cb7c73df5fb5",
+        "7d18758a-0eba-4996-8807-502d9dcc7bde"
+      ]
+    }
+  ],
+  "pinData": {},
+  "versionId": "a40a32d0-0e65-4d55-af6f-89a27fccc410",
+  "activeVersionId": null,
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-11-04T20:26:52.099Z",
+      "createdAt": "2026-11-04T20:26:52.099Z",
+      "role": "workflow:owner",
+      "workflowId": "2IiSVBfxfwX5oGlo",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}

@@ -1,0 +1,503 @@
+{
+  "updatedAt": "2026-11-04T20:25:16.299Z",
+  "createdAt": "2026-11-04T18:59:48.875Z",
+  "id": "qGmZ5aGIhbkZ6u4i",
+  "name": "api.authorize",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "R5qrBqVvgf8IB7uS",
+          "mode": "list",
+          "cachedResultName": "api_customers",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "api_key_hash",
+              "keyValue": "={{ $('Hash API Key').first().json.api_key_hash }}"
+            },
+            {
+              "keyName": "is_active",
+              "condition": "isTrue"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        -160
+      ],
+      "id": "0f8adfab-960a-4c0f-a892-0c08ff66216d",
+      "name": "Lookup Customer",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3d2e70a1-2efc-44d8-8e9e-128e22cfe831",
+              "leftValue": "={{ $json.customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "08c416bd-52fb-4c12-97e9-d2b91c2434a4",
+      "name": "Customer Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parses the presented API key. Hashing happens in the Crypto node —\nconst out = [];\n\nfor (const item of $input.all()) {\n  const h = item.json.headers ?? {};\n  const raw =\n    h[\"x-api-key\"] ??\n    (typeof h[\"authorization\"] === \"string\"\n      ? h[\"authorization\"].replace(/^Bearer\\s+/i, \"\")\n      : undefined);\n  const key = typeof raw === \"string\" ? raw.trim() : \"\";\n  const ok = key.length >= 20;\n\n  out.push({\n    json: {\n      ...item.json,\n      auth: {\n        ok,\n        reason: ok ? undefined : \"MISSING_OR_SHORT_KEY\",\n        key_to_hash: key,\n        key_prefix: key.slice(0, 12),\n        presented_customer_id: item.json.body?.customerId ?? null,\n      },\n    },\n    binary: item.binary,\n  });\n}\n\nreturn out;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -496,
+        -64
+      ],
+      "id": "85f86715-3396-424b-99c3-2e4735d50e2c",
+      "name": "Authenticate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "96cb9c10-4c9f-4e8c-8503-b1e3b6debcff",
+              "leftValue": "={{ $('Authenticate').first().json.auth.presented_customer_id === null\n   || String($('Authenticate').first().json.auth.presented_customer_id)\n      === String($('Lookup Customer').first().json.customer_id) }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        -256
+      ],
+      "id": "3e4e141b-b374-479e-bb76-33d81811533f",
+      "name": "Identity Matches?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f9bea1d3-23e1-480e-b29a-cf05579df6db",
+              "leftValue": "={{ $json.auth.ok }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -288,
+        -64
+      ],
+      "id": "1b69a41f-43bc-45ed-aa64-657cc32447d7",
+      "name": "If Key Present"
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.auth.key_to_hash }}",
+        "dataPropertyName": "api_key_hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -160
+      ],
+      "id": "833e6382-1b0a-4c79-8700-950ebf5d366b",
+      "name": "Hash API Key"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Lookup Customer').first().json;\n/**\nconst required = String(\n  $('When Executed by Another Workflow').first().json.required_scope ?? ''\n).trim();\n**/\nconst required = String(\n  $('Authenticate').first().json.required_scope ?? ''\n).trim();\nlet scopes = [];\ntry {\n  const parsed = JSON.parse(row.allowed_scopes ?? '[]');\n  if (Array.isArray(parsed)) scopes = parsed.map(String);\n} catch (e) {\n  scopes = [];               // fail closed\n}\n\nconst allowed = required !== '' && scopes.includes(required);\n\nreturn [{ json: {\n  ...row,\n  scopes,\n  required_scope: required,\n  scope_allowed: allowed\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -336
+      ],
+      "id": "7c0dcbe8-fe05-46dd-ada0-3e53a0049797",
+      "name": "Scope Allowed?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "905c8257-17d5-4052-b34c-5c7937786382",
+              "leftValue": "={{ $json.scope_allowed }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1168,
+        -336
+      ],
+      "id": "db5f8953-6bdb-4f79-891c-e0c02a64b462",
+      "name": "Scope OK?"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  authorized: true,\n  status: 200,\n  customer_id: $input.first().json.customer_id,\n  key_prefix: $input.first().json.key_prefix,\n  scopes: $input.first().json.scopes,\n  required_scope: $input.first().json.required_scope,\n  customer: $input.first().json\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        -416
+      ],
+      "id": "1e4137cf-02a3-44fa-a6e9-5416f665b02c",
+      "name": "Return Authorized"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{ \"authorized\": false, \"status\": 403, \"reason\": \"FORBIDDEN\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1440,
+        -224
+      ],
+      "id": "3ec871d0-682d-4dc5-8871-5b61a22c06c8",
+      "name": "Return Forbidden"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{ \"authorized\": false, \"status\": 401, \"reason\": \"UNAUTHORIZED\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1456,
+        352
+      ],
+      "id": "ba9a7127-959f-4a16-9806-c2f9e989821f",
+      "name": "Return Unauthorized No Key Present"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{ \"authorized\": false, \"status\": 401, \"reason\": \"CUSTOMER_ID_NOT_FOUND\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1440,
+        -48
+      ],
+      "id": "d825099d-8a32-4933-a1d0-9b4b07b2997d",
+      "name": "Return Unauthorized Identity Mismatch"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "9c17b0aa-07e8-482f-82f6-a06151bf6b59",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{ \"authorized\": false, \"status\": 401, \"reason\": \"CUSTOMER_NOT_FOUND\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1440,
+        144
+      ],
+      "id": "e57c6fd7-9388-4132-a374-959fddc5fe12",
+      "name": "Return Unauthorized Customer not found"
+    }
+  ],
+  "connections": {
+    "Lookup Customer": {
+      "main": [
+        [
+          {
+            "node": "Customer Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer Found?": {
+      "main": [
+        [
+          {
+            "node": "Identity Matches?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Unauthorized Customer not found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate": {
+      "main": [
+        [
+          {
+            "node": "If Key Present",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Key Present": {
+      "main": [
+        [
+          {
+            "node": "Hash API Key",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Unauthorized No Key Present",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash API Key": {
+      "main": [
+        [
+          {
+            "node": "Lookup Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identity Matches?": {
+      "main": [
+        [
+          {
+            "node": "Scope Allowed?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Unauthorized Identity Mismatch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scope Allowed?": {
+      "main": [
+        [
+          {
+            "node": "Scope OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scope OK?": {
+      "main": [
+        [
+          {
+            "node": "Return Authorized",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Forbidden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Authorized": {
+      "main": [
+        []
+      ]
+    },
+    "Return Forbidden": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Authenticate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Unauthorized No Key Present": {
+      "main": [
+        []
+      ]
+    },
+    "Return Unauthorized Identity Mismatch": {
+      "main": [
+        []
+      ]
+    },
+    "Return Unauthorized Customer not found": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "73863ad6-cd8c-4aed-9e0d-d9662b78cc53",
+  "activeVersionId": "73863ad6-cd8c-4aed-9e0d-d9662b78cc53",
+  "versionCounter": 132,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-11-04T18:59:48.879Z",
+      "createdAt": "2026-11-04T18:59:48.879Z",
+      "role": "workflow:owner",
+      "workflowId": "qGmZ5aGIhbkZ6u4i",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": "Version 73863ad6",
+    "description": ""
+  }
+}
