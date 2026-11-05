@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-05T22:44:23.871Z",
+  "updatedAt": "2026-11-05T23:09:09.630Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -276,7 +276,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  salesorder_id: $('Create SalesOrder').first().json.body?.result?.id ?? null,\n  salesorder_no: $('Create SalesOrder').first().json.body?.result?.salesorder_no ?? null,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
       },
       "id": "b0b76abf-8361-4ffc-aafb-3433a28034bc",
       "name": "Build Confirmation",
@@ -684,8 +684,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        704,
-        496
+        720,
+        256
       ]
     },
     {
@@ -897,9 +897,17 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.parse($json.response_json) }}",
+        "responseBody": "={{ (() => { const r = $json; const o = JSON.parse(r.response_json); return { ...o, salesorder_id: o.salesorder_id ?? r.vtiger_so_id ?? null, salesorder_no: o.salesorder_no ?? r.vtiger_so_number ?? null, replayed: true, message: 'Order already processed; returning the original response' }; })() }}",
         "options": {
-          "responseCode": 201
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Idempotent-Replayed",
+                "value": "true"
+              }
+            ]
+          }
         }
       },
       "id": "6df2b218-1011-4196-9207-7fa7b18275a5",
@@ -914,7 +922,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'duplicate', message: 'Order already submitted', order_id: $json.order_id, salesorder_no: $json.vtiger_so_number } }}",
+        "responseBody": "={{ (() => { const r = $json; const failed = ['FAILED_CRM','CRM_UNKNOWN'].includes(String(r.status ?? '')); return { status: failed ? 'failed' : 'in_progress', message: failed ? 'Order previously failed and will not be retried automatically; contact support with this reference number; do not resubmit with a new reference until the CRM state is reconciled.' : 'Order already submitted and is still processing.', retryable: !failed, ledger_status: r.status ?? null, order_id: r.order_id ?? null, salesorder_no: r.vtiger_so_number ?? null, error_message: r.error_message ?? null }; })() }}",
         "options": {
           "responseCode": 409
         }
@@ -2141,9 +2149,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "69e8447b-9a55-4c23-80d2-c7e5010d0bb5",
-  "activeVersionId": "e78b12ae-2132-423c-becb-ad361a372f6b",
-  "versionCounter": 596,
+  "versionId": "d7a3e439-3f57-4e21-9ebb-c99d3f40ec20",
+  "activeVersionId": "d7a3e439-3f57-4e21-9ebb-c99d3f40ec20",
+  "versionCounter": 600,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -2168,7 +2176,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version d7a3e439",
+    "description": ""
   }
 }
