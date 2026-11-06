@@ -2375,7 +2375,7 @@
   ],
   "pinData": {},
   "versionId": "05f5f377-5965-4e97-bf53-4c3a493b49cf",
-  "activeVersionId": "d7a3e439-3f57-4e21-9ebb-c99d3f40ec20",
+  "activeVersionId": "05f5f377-5965-4e97-bf53-4c3a493b49cf",
   "versionCounter": 723,
   "triggerCount": 1,
   "sourceWorkflowId": null,
@@ -2401,7 +2401,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version 05f5f377",
+    "description": ""
   }
 }
