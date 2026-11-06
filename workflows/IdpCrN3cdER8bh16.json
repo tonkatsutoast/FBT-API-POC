@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-05T23:09:09.630Z",
+  "updatedAt": "2026-11-06T20:27:59.463Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -35,8 +35,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1888,
-        -144
+        -1440,
+        -160
       ]
     },
     {
@@ -65,8 +65,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        -1712,
-        -144
+        -1264,
+        -160
       ]
     },
     {
@@ -99,8 +99,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1392,
-        -144
+        -944,
+        -160
       ]
     },
     {
@@ -132,7 +132,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        32,
+        480,
         -16
       ],
       "executeOnce": true,
@@ -152,9 +152,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
+        1152,
         -16
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -192,8 +193,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        896,
-        -16
+        1408,
+        -32
       ],
       "credentials": {
         "httpBasicAuth": {
@@ -242,7 +243,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1168,
+        1616,
         -80
       ]
     },
@@ -255,7 +256,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4080,
+        4528,
         -240
       ]
     },
@@ -270,7 +271,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        4304,
+        4752,
         -240
       ]
     },
@@ -283,7 +284,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5200,
+        5648,
         -240
       ],
       "executeOnce": true
@@ -301,14 +302,14 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        5792,
+        6240,
         -240
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'rejected', errors: $json.errors } }}",
+        "responseBody": "={{ { error: { code: 'INVALID_ORDER', message: 'The order contains invalid fields.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: ($json.errors ?? []).map(e => ({ issue: String(e) })) } } }}",
         "options": {
           "responseCode": 422
         }
@@ -318,7 +319,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -960,
+        -512,
         208
       ]
     },
@@ -369,7 +370,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2464,
+        2912,
         -32
       ],
       "alwaysOutputData": true
@@ -413,14 +414,14 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2688,
+        3136,
         -32
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\"status\":\"payment_failed\",\"errors\":[\"No payment method on file for this customer\"]}",
+        "responseBody": "={{ { error: { code: 'PAYMENT_METHOD_MISSING', message: 'No payment method on file for this customer.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [] } } }}",
         "options": {
           "responseCode": 402
         }
@@ -430,7 +431,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3040,
+        3488,
         96
       ]
     },
@@ -513,7 +514,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        3040,
+        3488,
         -96
       ],
       "credentials": {
@@ -561,7 +562,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3312,
+        3760,
         -80
       ]
     },
@@ -596,7 +597,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        3584,
+        4032,
         -128
       ],
       "credentials": {
@@ -609,7 +610,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'payment_failed', errors: [ $json.body?.error?.message ?? 'Payment failed' ], decline_code: $json.body?.error?.decline_code ?? null } }}",
+        "responseBody": "={{ { error: { code: 'PAYMENT_FAILED', message: 'Payment failed.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [{ decline_code: $json.body?.error?.decline_code ?? null, raw: $json.body?.error?.message ?? 'Payment failed' }] } } }}",
         "options": {
           "responseCode": 402
         }
@@ -619,7 +620,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3584,
+        4032,
         80
       ]
     },
@@ -632,7 +633,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        256,
+        704,
         -16
       ]
     },
@@ -667,14 +668,14 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        480,
+        928,
         -16
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { status: 'error', errors: [ $json.lookup_error ?? 'Product lookup failed' ] } }}",
+        "responseBody": "={{ { error: { code: 'PRODUCT_LOOKUP_FAILED', message: 'Could not retrieve product pricing.', retryable: true, requestId: $('Validate Input').first().json.requestId, details: [{ issue: $json.lookup_error ?? 'Product lookup failed' }] } } }}",
         "options": {
           "responseCode": 502
         }
@@ -684,8 +685,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        720,
-        256
+        1408,
+        320
       ]
     },
     {
@@ -695,7 +696,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4528,
+        4976,
         -240
       ],
       "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
@@ -728,7 +729,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        4736,
+        5184,
         -224
       ],
       "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
@@ -756,7 +757,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        4976,
+        5424,
         -240
       ],
       "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
@@ -780,7 +781,8 @@
         -128
       ],
       "id": "1221d0e6-6ad9-4465-9feb-752ba8e04c73",
-      "name": "Normalize Order"
+      "name": "Normalize Order",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -855,7 +857,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -1072,
+        -624,
         -272
       ],
       "alwaysOutputData": true
@@ -890,14 +892,14 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -592,
+        -144,
         -288
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ (() => { const r = $json; const o = JSON.parse(r.response_json); return { ...o, salesorder_id: o.salesorder_id ?? r.vtiger_so_id ?? null, salesorder_no: o.salesorder_no ?? r.vtiger_so_number ?? null, replayed: true, message: 'Order already processed; returning the original response' }; })() }}",
+        "responseBody": "={{ (() => {\n  const r = $json;\n  const o = JSON.parse(r.response_json);\n  return {\n    ...o,\n    salesorder_id: o.salesorder_id ?? r.vtiger_so_id ?? null,\n    salesorder_no: o.salesorder_no ?? r.vtiger_so_number ?? null,\n    replayed: true,\n    message: 'Order already processed; returning the original response',\n    requestId: $('Validate Input').first().json.requestId\n  };\n})() }}",
         "options": {
           "responseCode": 200,
           "responseHeaders": {
@@ -915,14 +917,14 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -320,
+        128,
         -368
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ (() => { const r = $json; const failed = ['FAILED_CRM','CRM_UNKNOWN'].includes(String(r.status ?? '')); return { status: failed ? 'failed' : 'in_progress', message: failed ? 'Order previously failed and will not be retried automatically; contact support with this reference number; do not resubmit with a new reference until the CRM state is reconciled.' : 'Order already submitted and is still processing.', retryable: !failed, ledger_status: r.status ?? null, order_id: r.order_id ?? null, salesorder_no: r.vtiger_so_number ?? null, error_message: r.error_message ?? null }; })() }}",
+        "responseBody": "={{ (() => {\n  const r = $json;\n  const failed = ['FAILED_CRM', 'CRM_UNKNOWN'].includes(String(r.status ?? ''));\n  return {\n    error: {\n      code: failed ? 'ORDER_FAILED' : 'ORDER_IN_PROGRESS',\n      message: failed\n        ? 'Order previously failed and will not be retried automatically. Contact support with this reference number.'\n        : 'Order already submitted and is still processing.',\n      retryable: !failed,\n      requestId: $('Validate Input').first().json.requestId,\n      details: [{\n        ledger_status: r.status ?? null,\n        order_id: r.order_id ?? null,\n        salesorder_no: r.vtiger_so_number ?? null,\n        error_message: r.error_message ?? null\n      }]\n    }\n  };\n})() }}",
         "options": {
           "responseCode": 409
         }
@@ -932,7 +934,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -320,
+        128,
         -160
       ]
     },
@@ -1037,7 +1039,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -608,
+        -160,
         -16
       ]
     },
@@ -1108,7 +1110,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1936,
+        2384,
         -192
       ]
     },
@@ -1168,7 +1170,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1808,
+        2256,
         320
       ]
     },
@@ -1239,14 +1241,14 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5488,
+        5936,
         -240
       ]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"error\": \"CRM UNAVAILABLE\",\n  \"retryable\" : true\n}",
+        "responseBody": "={{ { error: { code: 'CRM_UNAVAILABLE', message: 'The CRM is temporarily unavailable. Please retry.', retryable: true, requestId: $('Validate Input').first().json.requestId, details: [] } } }}",
         "options": {
           "responseCode": 503,
           "responseHeaders": {
@@ -1262,7 +1264,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2016,
+        2464,
         -16
       ],
       "id": "2fe1420d-f17f-4194-a443-f64667104a01",
@@ -1296,7 +1298,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1504,
+        1952,
         0
       ],
       "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
@@ -1326,7 +1328,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1808,
+        2256,
         -16
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
@@ -1335,7 +1337,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: 'CRM_REJECTED', retryable: false } }}",
+        "responseBody": "={{ { error: { code: 'CRM_REJECTED', message: 'The CRM rejected the order.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [] } } }}",
         "options": {
           "responseCode": 502
         }
@@ -1345,7 +1347,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2000,
+        2448,
         320
       ]
     },
@@ -1358,8 +1360,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1552,
-        -144
+        -1104,
+        -160
       ]
     },
     {
@@ -1466,7 +1468,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -2368,
+        -2400,
         80
       ],
       "id": "de5e2a90-a19b-48a8-819a-fbf0d4150b07",
@@ -1475,7 +1477,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "=={{ { error: $json.reason ?? 'FORBIDDEN' } }}",
+        "responseBody": "={{ { error: { code: $json.reason ?? 'FORBIDDEN', message: 'You do not have permission to perform this action.', retryable: false, requestId: null, details: [] } } }}",
         "options": {
           "responseCode": 403
         }
@@ -1483,7 +1485,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -2096,
+        -2160,
         64
       ],
       "id": "e6909af0-9585-41ff-8180-0f469cbf3445",
@@ -1492,7 +1494,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "=={{ { error: $json.reason ?? 'UNAUTHORIZED' } }}",
+        "responseBody": "={{ { error: { code: $json.reason ?? 'UNAUTHORIZED', message: 'Authentication failed.', retryable: false, requestId: null, details: [] } } }}",
         "options": {
           "responseCode": 401
         }
@@ -1500,7 +1502,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -2080,
+        -2144,
         256
       ],
       "id": "1ae4f944-f6e6-480f-b743-d6e1342b20a1",
@@ -1536,9 +1538,165 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -896,
+        -448,
         -272
       ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2160,
+        -144
+      ],
+      "id": "4afaa0fe-f3ec-4216-ac3a-9f42f83a8008",
+      "name": "Validate Input"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "309c2747-689b-42ba-a3b1-ecfa075a1e53",
+              "leftValue": "=={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1936,
+        -144
+      ],
+      "id": "90855f0e-1133-475d-9e0c-1924d42bb551",
+      "name": "Is Input Valid"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: 'INVALID_JSON', message: 'The order payload is not valid JSON.', retryable: false, requestId: null, details: [{ issue: $json.error?.message ?? 'Invalid JSON' }] } } }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -3056,
+        64
+      ],
+      "id": "88e15fc8-f2de-4288-b60d-90f0d3c48ff0",
+      "name": "Respond Invalid JSON"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').first().json.idem_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        320
+      ],
+      "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
+      "name": "Delete Claim (Lookup)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: $json.error.code, message: $json.error.message, retryable: $json.error.retryable, requestId: $json.requestId, details: $json.error.details } } }}",
+        "options": {
+          "responseCode": "=={{ $json.error.code === 'EMPTY_BODY' ? 400 : 422 }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1728,
+        64
+      ],
+      "id": "fb85c854-1c5c-4332-83d5-66028bd44c4b",
+      "name": "Respond Validation Error"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').first().json.idem_key }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1408,
+        144
+      ],
+      "id": "20913296-2538-4038-a760-5c1068177ab5",
+      "name": "Delete Claim (Build)"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: 'INVALID_ORDER', message: 'Failed to build the order.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [{ issue: $json.error?.message ?? 'Unknown build error' }] } } }}",
+        "options": {
+          "responseCode": 422
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1616,
+        144
+      ],
+      "id": "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
+      "name": "Respond Build Error"
     }
   ],
   "connections": {
@@ -1609,6 +1767,13 @@
         [
           {
             "node": "Create SalesOrder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Claim (Build)",
             "type": "main",
             "index": 0
           }
@@ -1688,7 +1853,7 @@
       "main": [
         [
           {
-            "node": "Build Context",
+            "node": "Validate Input",
             "type": "main",
             "index": 0
           }
@@ -1786,7 +1951,7 @@
         ],
         [
           {
-            "node": "Respond Lookup Error",
+            "node": "Delete Claim (Lookup)",
             "type": "main",
             "index": 0
           }
@@ -1838,6 +2003,13 @@
         [
           {
             "node": "Set Auth Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Invalid JSON",
             "type": "main",
             "index": 0
           }
@@ -2066,6 +2238,57 @@
           }
         ]
       ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Is Input Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Input Valid": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Claim (Lookup)": {
+      "main": [
+        [
+          {
+            "node": "Respond Lookup Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Claim (Build)": {
+      "main": [
+        [
+          {
+            "node": "Respond Build Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2106,26 +2329,6 @@
       ]
     },
     {
-      "id": "0930ff1f-aa6c-416f-ac5d-e7c63ffcc7ed",
-      "name": "Create CRM Order",
-      "nodeIds": [
-        "071b8519-d437-4c31-9798-6f1c18632f42",
-        "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
-        "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
-        "f0c12b63-ff42-449d-92f8-e59ff6f99007",
-        "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
-        "9415cbde-46f2-421c-a503-952fc08c7cba",
-        "4f42a8c4-6d8a-4c51-889a-9e576a2e1859",
-        "cd704ff0-2aef-4cd3-911b-d3fb3b6b29db",
-        "5a507ef1-9660-4b7f-bdb9-0b180be8b88f",
-        "2fe1420d-f17f-4194-a443-f64667104a01",
-        "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
-        "835d6c41-c465-4e60-9530-7f97692198b0",
-        "1c6e285f-6196-4487-ab20-c3cf4fec4d0e"
-      ],
-      "description": "For valid orders: matches SKUs to CRM products, creates the sales order, and checks the CRM accepted it"
-    },
-    {
       "id": "ab2734d7-5fb0-489e-900f-755dda3a94e3",
       "name": "Price order",
       "nodeIds": [
@@ -2146,12 +2349,34 @@
         "3e4ddf0b-41f6-49e4-9c26-454c35344b4b",
         "e103272a-add0-4b1d-9fb6-587eb41adcf1"
       ]
+    },
+    {
+      "id": "f5f8aab9-f7e8-453a-96af-12db2f719499",
+      "name": "Create Sales Order",
+      "nodeIds": [
+        "071b8519-d437-4c31-9798-6f1c18632f42",
+        "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
+        "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
+        "f0c12b63-ff42-449d-92f8-e59ff6f99007",
+        "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
+        "9415cbde-46f2-421c-a503-952fc08c7cba",
+        "4f42a8c4-6d8a-4c51-889a-9e576a2e1859",
+        "cd704ff0-2aef-4cd3-911b-d3fb3b6b29db",
+        "5a507ef1-9660-4b7f-bdb9-0b180be8b88f",
+        "2fe1420d-f17f-4194-a443-f64667104a01",
+        "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
+        "835d6c41-c465-4e60-9530-7f97692198b0",
+        "1c6e285f-6196-4487-ab20-c3cf4fec4d0e",
+        "7fec76aa-271c-4e63-bdc9-5868677a9082",
+        "20913296-2538-4038-a760-5c1068177ab5",
+        "cc90b8fc-a12a-4f7e-a61c-9918be8488c6"
+      ]
     }
   ],
   "pinData": {},
-  "versionId": "d7a3e439-3f57-4e21-9ebb-c99d3f40ec20",
+  "versionId": "05f5f377-5965-4e97-bf53-4c3a493b49cf",
   "activeVersionId": "d7a3e439-3f57-4e21-9ebb-c99d3f40ec20",
-  "versionCounter": 600,
+  "versionCounter": 723,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -2176,7 +2401,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version d7a3e439",
-    "description": ""
+    "name": null,
+    "description": null
   }
 }

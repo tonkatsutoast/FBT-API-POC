@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-04T20:25:16.299Z",
+  "updatedAt": "2026-11-06T19:08:15.865Z",
   "createdAt": "2026-11-04T18:59:48.875Z",
   "id": "qGmZ5aGIhbkZ6u4i",
   "name": "api.authorize",
@@ -221,7 +221,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: {\n  authorized: true,\n  status: 200,\n  customer_id: $input.first().json.customer_id,\n  key_prefix: $input.first().json.key_prefix,\n  scopes: $input.first().json.scopes,\n  required_scope: $input.first().json.required_scope,\n  customer: $input.first().json\n} }];"
+        "jsCode": "const customer = $input.first().json;\n\nconst safeCustomer = {\n  customer_id: customer.customer_id,\n  vtiger_account_id: customer.vtiger_account_id,\n  vtiger_contact_id: customer.vtiger_contact_id,\n  vtiger_assigned_user_id: customer.vtiger_assigned_user_id,\n  stripe_customer_id: customer.stripe_customer_id,\n  is_active: customer.is_active,\n};\n\nreturn [{\n  json: {\n    authorized: true,\n    status: 200,\n    customer_id: customer.customer_id,\n    scopes: customer.scopes,\n    required_scope: customer.required_scope,\n    customer: safeCustomer\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -265,7 +265,7 @@
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "{ \"authorized\": false, \"status\": 401, \"reason\": \"CUSTOMER_ID_NOT_FOUND\" }\n",
+        "jsonOutput": "{ \"authorized\": false, \"status\": 403, \"reason\": \"CUSTOMER_ID_NOT_FOUND\" }\n",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
@@ -470,9 +470,9 @@
   },
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "73863ad6-cd8c-4aed-9e0d-d9662b78cc53",
+  "versionId": "9c3d4702-f742-484b-abf5-3b1747b2bcac",
   "activeVersionId": "73863ad6-cd8c-4aed-9e0d-d9662b78cc53",
-  "versionCounter": 132,
+  "versionCounter": 136,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
@@ -497,7 +497,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 73863ad6",
-    "description": ""
+    "name": null,
+    "description": null
   }
 }
