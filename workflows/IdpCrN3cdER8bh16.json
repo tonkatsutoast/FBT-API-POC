@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T20:27:59.463Z",
+  "updatedAt": "2026-11-07T01:44:07.641Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -35,8 +35,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1440,
-        -160
+        -1520,
+        -240
       ]
     },
     {
@@ -65,8 +65,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        -1264,
-        -160
+        -1344,
+        -240
       ]
     },
     {
@@ -99,8 +99,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -944,
-        -160
+        -1024,
+        -240
       ]
     },
     {
@@ -319,8 +319,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -512,
-        208
+        -608,
+        384
       ]
     },
     {
@@ -675,7 +675,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: { code: 'PRODUCT_LOOKUP_FAILED', message: 'Could not retrieve product pricing.', retryable: true, requestId: $('Validate Input').first().json.requestId, details: [{ issue: $json.lookup_error ?? 'Product lookup failed' }] } } }}",
+        "responseBody": "={{ { error: { code: 'PRODUCT_LOOKUP_FAILED', message: 'Could not retrieve product pricing.', retryable: true, requestId: $('Validate Input').first().json.requestId, details: [{ issue: $('Validate Product Lookup').first().json.lookup_error ?? 'Product lookup failed' }] } } }}",
         "options": {
           "responseCode": 502
         }
@@ -1332,7 +1332,8 @@
         -16
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
-      "name": "Delete Claim"
+      "name": "Delete Claim",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -1360,18 +1361,18 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1104,
-        -160
+        -1184,
+        -240
       ]
     },
     {
       "parameters": {
-        "jsCode": "return [{ json: {\n  headers: $json.headers ?? {},\n  body: $json.body ?? {},\n  required_scope: 'orders:create'     // change per endpoint\n} }];"
+        "jsCode": "const requestId = $('Request ID').first().json.requestId;\n\nreturn [{ json: {\n  headers: $json.headers ?? {},\n  body: $json.body ?? {},\n  required_scope: 'orders:create',\n  requestId\n} }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -3056,
+        -3008,
         -128
       ],
       "id": "efcfd891-bbc1-40bd-b82c-2f333cd2532a",
@@ -1477,7 +1478,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: { code: $json.reason ?? 'FORBIDDEN', message: 'You do not have permission to perform this action.', retryable: false, requestId: null, details: [] } } }}",
+        "responseBody": "={{ { error: { code: $json.reason ?? 'FORBIDDEN', message: 'You do not have permission to perform this action.', retryable: false, requestId: $('Set Auth Context').first().json.requestId, details: [] } } }}",
         "options": {
           "responseCode": 403
         }
@@ -1494,7 +1495,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: { code: $json.reason ?? 'UNAUTHORIZED', message: 'Authentication failed.', retryable: false, requestId: null, details: [] } } }}",
+        "responseBody": "={{ { error: { code: $json.reason ?? 'UNAUTHORIZED', message: 'Authentication failed.', retryable: false, requestId: $('Set Auth Context').first().json.requestId, details: [] } } }}",
         "options": {
           "responseCode": 401
         }
@@ -1543,7 +1544,9 @@
       ]
     },
     {
-      "parameters": {},
+      "parameters": {
+        "jsCode": "// This node runs AFTER auth. It must not rely on $input (the input is Load Config).\n// Read the normalized order and the authenticated customer by node reference.\nconst norm = $('Normalize Order').first().json;\nconst body = norm.body;\nconst requestId = $('Set Auth Context').first().json.requestId;\n\n// 1. Empty / missing body\nif (!body || typeof body !== 'object' || Object.keys(body).length === 0) {\n  return [{\n    json: {\n      requestId,\n      ok: false,\n      error: {\n        code: 'EMPTY_BODY',\n        message: 'Order payload is empty. Send application/json, or multipart/form-data with an `order` part.',\n        retryable: false,\n        details: []\n      }\n    }\n  }];\n}\n\n// 2. customerReferenceNumber is required and bounded\nconst ref = String(body.customerReferenceNumber ?? '').trim();\nif (!ref || ref.length > 64) {\n  return [{\n    json: {\n      requestId,\n      ok: false,\n      error: {\n        code: 'INVALID_REFERENCE',\n        message: 'customerReferenceNumber is required and must be at most 64 characters.',\n        retryable: false,\n        details: [{ field: 'customerReferenceNumber', issue: 'required_or_too_long' }]\n      }\n    }\n  }];\n}\n\n// 3. Address validation (moved ahead of the ledger claim)\nconst REQUIRED_FIELDS = ['firstName', 'lastName', 'address1', 'city', 'state', 'postcode'];\nconst missing = [];\nfor (const section of ['billing', 'shipping']) {\n  const data = body[section] || {};\n  for (const field of REQUIRED_FIELDS) {\n    if (!String(data[field] ?? '').trim()) missing.push(`${section}.${field}`);\n  }\n}\nif (missing.length > 0) {\n  return [{\n    json: {\n      requestId,\n      ok: false,\n      error: {\n        code: 'INVALID_ADDRESS',\n        message: 'Missing required billing or shipping address fields.',\n        retryable: false,\n        details: missing.map(field => ({ field, issue: 'required' }))\n      }\n    }\n  }];\n}\n\n// 4. Valid\nreturn [{\n  json: {\n    ...norm,\n    requestId,\n    ok: true\n  }\n}];"
+      },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -1565,7 +1568,7 @@
           "conditions": [
             {
               "id": "309c2747-689b-42ba-a3b1-ecfa075a1e53",
-              "leftValue": "=={{ $json.ok }}",
+              "leftValue": "={{ $json.ok }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -1590,7 +1593,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: { code: 'INVALID_JSON', message: 'The order payload is not valid JSON.', retryable: false, requestId: null, details: [{ issue: $json.error?.message ?? 'Invalid JSON' }] } } }}",
+        "responseBody": "={{ { error: { code: 'INVALID_JSON', message: 'The order payload is not valid JSON.', retryable: false, requestId: $('Request ID').first().json.requestId, details: [{ issue: $json.error?.message ?? 'Invalid JSON' }] } } }}",
         "options": {
           "responseCode": 400
         }
@@ -1598,8 +1601,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -3056,
-        64
+        -3008,
+        496
       ],
       "id": "88e15fc8-f2de-4288-b60d-90f0d3c48ff0",
       "name": "Respond Invalid JSON"
@@ -1632,14 +1635,15 @@
         320
       ],
       "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
-      "name": "Delete Claim (Lookup)"
+      "name": "Delete Claim (Lookup)",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { error: { code: $json.error.code, message: $json.error.message, retryable: $json.error.retryable, requestId: $json.requestId, details: $json.error.details } } }}",
         "options": {
-          "responseCode": "=={{ $json.error.code === 'EMPTY_BODY' ? 400 : 422 }}"
+          "responseCode": "={{ $json.error.code === 'EMPTY_BODY' ? 400 : 422 }}"
         }
       },
       "type": "n8n-nodes-base.respondToWebhook",
@@ -1679,12 +1683,13 @@
         144
       ],
       "id": "20913296-2538-4038-a760-5c1068177ab5",
-      "name": "Delete Claim (Build)"
+      "name": "Delete Claim (Build)",
+      "alwaysOutputData": true
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: { code: 'INVALID_ORDER', message: 'Failed to build the order.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [{ issue: $json.error?.message ?? 'Unknown build error' }] } } }}",
+        "responseBody": "={{ { error: { code: 'INVALID_ORDER', message: 'Failed to build the order.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [{ issue: $('Build SalesOrder').first(1).json.error?.message ?? $('Build SalesOrder').first(1).json.error ?? 'Unknown build error' }] } } }}",
         "options": {
           "responseCode": 422
         }
@@ -1697,6 +1702,19 @@
       ],
       "id": "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
       "name": "Respond Build Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\n\nreturn [{\n  json: {\n    ...item.json,\n    requestId: `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`\n  },\n  binary: item.binary\n}];"
+      },
+      "id": "7c516959-d668-4395-99bd-3e260451f670",
+      "name": "Request ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3968,
+        -208
+      ]
     }
   ],
   "connections": {
@@ -1704,7 +1722,7 @@
       "main": [
         [
           {
-            "node": "Has Order File?",
+            "node": "Request ID",
             "type": "main",
             "index": 0
           }
@@ -2289,6 +2307,17 @@
           }
         ]
       ]
+    },
+    "Request ID": {
+      "main": [
+        [
+          {
+            "node": "Has Order File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2329,16 +2358,6 @@
       ]
     },
     {
-      "id": "ab2734d7-5fb0-489e-900f-755dda3a94e3",
-      "name": "Price order",
-      "nodeIds": [
-        "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
-        "e6a60112-0131-467a-8a5f-b1126be8ba2b",
-        "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11",
-        "3d45f218-89ef-4083-bfc4-ac6eadd0ae32"
-      ]
-    },
-    {
       "id": "1914c384-6c4a-4c16-a31b-9894095973cb",
       "name": "Idempotency check",
       "nodeIds": [
@@ -2371,12 +2390,22 @@
         "20913296-2538-4038-a760-5c1068177ab5",
         "cc90b8fc-a12a-4f7e-a61c-9918be8488c6"
       ]
+    },
+    {
+      "id": "ab2734d7-5fb0-489e-900f-755dda3a94e3",
+      "name": "Price order",
+      "nodeIds": [
+        "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
+        "e6a60112-0131-467a-8a5f-b1126be8ba2b",
+        "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11",
+        "3d45f218-89ef-4083-bfc4-ac6eadd0ae32"
+      ]
     }
   ],
   "pinData": {},
-  "versionId": "05f5f377-5965-4e97-bf53-4c3a493b49cf",
+  "versionId": "081b4367-4157-481f-bb95-b1ab41f3cd0c",
   "activeVersionId": "05f5f377-5965-4e97-bf53-4c3a493b49cf",
-  "versionCounter": 723,
+  "versionCounter": 750,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -2401,7 +2430,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 05f5f377",
-    "description": ""
+    "name": null,
+    "description": null
   }
 }

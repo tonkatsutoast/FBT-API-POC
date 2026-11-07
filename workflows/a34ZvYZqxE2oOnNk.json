@@ -1,0 +1,88 @@
+{
+  "updatedAt": "2026-11-07T02:10:07.357Z",
+  "createdAt": "2026-11-07T02:04:48.090Z",
+  "id": "a34ZvYZqxE2oOnNk",
+  "name": "api.auth.gate",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9156898a-cff7-4e8c-8ed1-ab78895a5362",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const auth = $input.first().json;\n\n// api.authorize's terminal nodes don't return requestId, so read it from the\n// gate's own trigger input.\nconst requestId = $('When Executed by Another Workflow').first().json.requestId ?? null;\n\nif (auth.authorized === true) {\n  return [{\n    json: {\n      authorized: true,\n      customer: auth.customer ?? null,\n      requestId\n    }\n  }];\n}\n\nconst code = String(auth.reason ?? 'UNAUTHORIZED');\nconst statusCode = Number(auth.status) === 403 ? 403 : 401;\n\nconst messages = {\n  UNAUTHORIZED: 'Authentication failed.',\n  CUSTOMER_NOT_FOUND: 'The API key is not valid or has been revoked.',\n  CUSTOMER_ID_MISMATCH: 'The API key is valid, but the customer ID does not match.',\n  FORBIDDEN: 'The API key does not have the required scope.'\n};\n\nreturn [{\n  json: {\n    authorized: false,\n    statusCode,\n    requestId,\n    responseBody: {\n      error: {\n        code,\n        message: messages[code] ?? 'Authorization failed.',\n        retryable: false,\n        requestId,\n        details: []\n      }\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "49acae56-2b7e-4b26-9de0-c7f5861d7b3a",
+      "name": "Build Auth Decision"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Build Auth Decision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "37886950-c27b-42d2-afc5-5a3a4199e45a",
+  "activeVersionId": "37886950-c27b-42d2-afc5-5a3a4199e45a",
+  "versionCounter": 8,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-11-07T02:04:48.093Z",
+      "createdAt": "2026-11-07T02:04:48.093Z",
+      "role": "workflow:owner",
+      "workflowId": "a34ZvYZqxE2oOnNk",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": "Version 37886950",
+    "description": ""
+  }
+}
