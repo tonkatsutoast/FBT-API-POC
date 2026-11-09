@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-07T02:10:07.357Z",
+  "updatedAt": "2026-11-09T22:21:44.668Z",
   "createdAt": "2026-11-07T02:04:48.090Z",
   "id": "a34ZvYZqxE2oOnNk",
   "name": "api.auth.gate",
@@ -27,15 +27,61 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        224,
+        448,
         0
       ],
       "id": "49acae56-2b7e-4b26-9de0-c7f5861d7b3a",
       "name": "Build Auth Decision"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "qGmZ5aGIhbkZ6u4i",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/qGmZ5aGIhbkZ6u4i",
+          "cachedResultName": "api.authorize"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "06dd538a-4774-4563-945c-eec38df397a2",
+      "name": "Call 'api.authorize'"
     }
   ],
   "connections": {
     "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Call 'api.authorize'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Auth Decision": {
+      "main": [
+        []
+      ]
+    },
+    "Call 'api.authorize'": {
       "main": [
         [
           {
@@ -55,9 +101,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "37886950-c27b-42d2-afc5-5a3a4199e45a",
-  "activeVersionId": "37886950-c27b-42d2-afc5-5a3a4199e45a",
-  "versionCounter": 8,
+  "versionId": "6b249b1f-22e2-43a8-99ce-ca24dabf65be",
+  "activeVersionId": "6b249b1f-22e2-43a8-99ce-ca24dabf65be",
+  "versionCounter": 14,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
@@ -82,7 +128,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 37886950",
+    "name": "Version 6b249b1f",
     "description": ""
   }
 }
