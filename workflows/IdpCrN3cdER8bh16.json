@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-07T01:44:07.641Z",
+  "updatedAt": "2026-11-09T22:30:50.643Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -28,7 +28,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\n\n// Resolve the authenticated customer before deriving the idempotency key.\n// With key-based lookup, \"no row\" now means the key is unknown or revoked.\n//const cust = $('Lookup Customer').all().map(i => i.json)[0] ?? {};\nconst cust = $(\"Call 'api.authorize'\").first().json.customer ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nb.customerId = cust.customer_id;   // authenticated identity wins over the body\n\nconst idem_key = `${b.customerId}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    vtiger_contact_id: cust.vtiger_contact_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
+        "jsCode": "const webhook = $('Webhook').first();\nconst norm = $('Normalize Order').first().json;\nconst b = norm.body;\nif (!b || typeof b !== 'object' || Object.keys(b).length === 0) {\n  throw new Error('Order payload is empty - send application/json, or multipart/form-data with an `order` part');\n}\nconst is_multipart = norm.is_multipart === true;\n\n// ---- optional artwork -------------------------------------------------------\n// Contract: artwork is OPTIONAL. If a caller wants to submit artwork it MUST be\n// the multipart file field named `artWork`, and must be a jpg or png. Any other\n// file field is ignored on purpose; a non-image `artWork` is ignored as well.\n// The bytes are read from the Webhook node (the binary does not survive\n// Process Order, so it is addressed by node reference rather than carried).\nconst artBinary = webhook.binary?.artWork;\nlet art_work_provided = false;\nlet art_work_extension = null;\nlet art_work_file_name = null;\nlet art_work_mime_type = null;\nlet art_work_invalid = false;\nif (artBinary) {\n  const mime = String(artBinary.mimeType ?? '').toLowerCase();\n  const name = String(artBinary.fileName ?? '');\n  const ext = (name.match(/\\.([a-z0-9]+)$/i)?.[1] ?? '').toLowerCase();\n  const isPng = mime === 'image/png' || ext === 'png';\n  const isJpg = mime === 'image/jpeg' || mime === 'image/jpg' || ext === 'jpg' || ext === 'jpeg';\n  if (isPng || isJpg) {\n    art_work_provided = true;\n    art_work_extension = isPng ? 'png' : 'jpg';\n    art_work_file_name = name || null;\n    art_work_mime_type = mime || null;\n  } else {\n    art_work_invalid = true;   // artWork supplied but not jpg/png -> ignored\n  }\n}\n\nconst now = new Date();\nconst order_id = `TS-${now.toISOString().slice(0, 10).replace(/-/g, '')}-` +\n                 Math.random().toString(36).slice(2, 8).toUpperCase();\n\nconst cfg = Object.fromEntries(\n  $('Load Config').all().map(r => [r.json.name, r.json.value])\n);\nconst customer_ref = String(b.customerReferenceNumber ?? '').trim();\nif (!customer_ref || customer_ref.length > 64) {\n  // return validation error → 422 \"customerReferenceNumber is required (max 64 chars)\"\n}\n\n// Resolve the authenticated customer before deriving the idempotency key.\n// With key-based lookup, \"no row\" now means the key is unknown or revoked.\n\nconst cust = $(\"Call 'api.auth.gate'\").first().json.customer ?? {};\nif (!cust.customer_id || !cust.is_active) {\n  throw new Error('Customer not found or inactive');\n}\nb.customerId = cust.customer_id;   // authenticated identity wins over the body\n\nconst idem_key = `${b.customerId}|${customer_ref}`;\nreturn [{\n  json: {\n    ...b,                          // original order: customerId, orderType, lineItems, billing, shipping\n    order_id,\n    reference_url: b.referenceNumber,\n    customer_reference_number: customer_ref,\n    idem_key,\n    created_at: now.toISOString(),\n    vtiger_base_url: cfg.vtiger_base_url,\n    vtiger_assigned_user_id: cust.vtiger_assigned_user_id || cfg.vtiger_assigned_user_id,\n    customer_id: cust.customer_id,  \n    vtiger_account_id: cust.vtiger_account_id,\n    stripe_customer_id: cust.stripe_customer_id,\n    vtiger_contact_id: cust.vtiger_contact_id,\n    // artwork / transport metadata\n    is_multipart,\n    art_work_provided,\n    art_work_field: art_work_provided ? 'artWork' : null,\n    art_work_file_name,\n    art_work_mime_type,\n    art_work_extension,\n    art_work_invalid\n  }\n}];"
       },
       "id": "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
       "name": "Build Context",
@@ -1380,36 +1380,6 @@
     },
     {
       "parameters": {
-        "workflowId": {
-          "__rl": true,
-          "value": "qGmZ5aGIhbkZ6u4i",
-          "mode": "list",
-          "cachedResultUrl": "/workflow/qGmZ5aGIhbkZ6u4i",
-          "cachedResultName": "api.authorize"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {
-          "waitForSubWorkflow": true
-        }
-      },
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1.4,
-      "position": [
-        -2832,
-        -128
-      ],
-      "id": "250f35f6-6db2-474a-bd32-4be428583abf",
-      "name": "Call 'api.authorize'"
-    },
-    {
-      "parameters": {
         "conditions": {
           "options": {
             "caseSensitive": true,
@@ -1441,73 +1411,6 @@
       ],
       "id": "42167e77-4eb6-4efc-8daa-4e57a8f62a48",
       "name": "Authorized?"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "bf0becc1-3a75-4872-8ec3-93ab186069d1",
-              "leftValue": "={{ $json.status }}",
-              "rightValue": 403,
-              "operator": {
-                "type": "number",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        -2400,
-        80
-      ],
-      "id": "de5e2a90-a19b-48a8-819a-fbf0d4150b07",
-      "name": "Auth 403?"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { error: { code: $json.reason ?? 'FORBIDDEN', message: 'You do not have permission to perform this action.', retryable: false, requestId: $('Set Auth Context').first().json.requestId, details: [] } } }}",
-        "options": {
-          "responseCode": 403
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -2160,
-        64
-      ],
-      "id": "e6909af0-9585-41ff-8180-0f469cbf3445",
-      "name": "Respond 403"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { error: { code: $json.reason ?? 'UNAUTHORIZED', message: 'Authentication failed.', retryable: false, requestId: $('Set Auth Context').first().json.requestId, details: [] } } }}",
-        "options": {
-          "responseCode": 401
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        -2144,
-        256
-      ],
-      "id": "1ae4f944-f6e6-480f-b743-d6e1342b20a1",
-      "name": "Respond 401"
     },
     {
       "parameters": {
@@ -1715,6 +1618,53 @@
         -3968,
         -208
       ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "a34ZvYZqxE2oOnNk",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/a34ZvYZqxE2oOnNk",
+          "cachedResultName": "api.auth.gate"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        -2832,
+        -128
+      ],
+      "id": "250f35f6-6db2-474a-bd32-4be428583abf",
+      "name": "Call 'api.auth.gate'"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.responseBody }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -2368,
+        64
+      ],
+      "id": "80112395-b5e1-437f-a344-1924e521c7ff",
+      "name": "Respond Auth Error"
     }
   ],
   "connections": {
@@ -2180,18 +2130,7 @@
       "main": [
         [
           {
-            "node": "Call 'api.authorize'",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Call 'api.authorize'": {
-      "main": [
-        [
-          {
-            "node": "Authorized?",
+            "node": "Call 'api.auth.gate'",
             "type": "main",
             "index": 0
           }
@@ -2209,34 +2148,11 @@
         ],
         [
           {
-            "node": "Auth 403?",
+            "node": "Respond Auth Error",
             "type": "main",
             "index": 0
           }
         ]
-      ]
-    },
-    "Auth 403?": {
-      "main": [
-        [
-          {
-            "node": "Respond 403",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond 401",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Respond 403": {
-      "main": [
-        []
       ]
     },
     "Ledger Row Exists?": {
@@ -2313,6 +2229,17 @@
         [
           {
             "node": "Has Order File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'api.auth.gate'": {
+      "main": [
+        [
+          {
+            "node": "Authorized?",
             "type": "main",
             "index": 0
           }
@@ -2403,9 +2330,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "081b4367-4157-481f-bb95-b1ab41f3cd0c",
-  "activeVersionId": "05f5f377-5965-4e97-bf53-4c3a493b49cf",
-  "versionCounter": 750,
+  "versionId": "0d94731c-6241-4d0d-83e7-9f796924afad",
+  "activeVersionId": "0d94731c-6241-4d0d-83e7-9f796924afad",
+  "versionCounter": 775,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -2430,7 +2357,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version 0d94731c",
+    "description": ""
   }
 }

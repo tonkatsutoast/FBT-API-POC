@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-06T19:08:15.865Z",
+  "updatedAt": "2026-11-09T22:43:36.419Z",
   "createdAt": "2026-11-04T18:59:48.875Z",
   "id": "qGmZ5aGIhbkZ6u4i",
   "name": "api.authorize",
@@ -265,7 +265,7 @@
     {
       "parameters": {
         "mode": "raw",
-        "jsonOutput": "{ \"authorized\": false, \"status\": 403, \"reason\": \"CUSTOMER_ID_NOT_FOUND\" }\n",
+        "jsonOutput": "{ \"authorized\": false, \"status\": 403, \"reason\": \"CUSTOMER_ID_MISMATCH\" }",
         "options": {}
       },
       "type": "n8n-nodes-base.set",
@@ -470,9 +470,9 @@
   },
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "9c3d4702-f742-484b-abf5-3b1747b2bcac",
-  "activeVersionId": "73863ad6-cd8c-4aed-9e0d-d9662b78cc53",
-  "versionCounter": 136,
+  "versionId": "a104991a-adf5-499f-8499-d418ec95eaca",
+  "activeVersionId": "a104991a-adf5-499f-8499-d418ec95eaca",
+  "versionCounter": 139,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
@@ -497,7 +497,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version a104991a",
+    "description": ""
   }
 }
