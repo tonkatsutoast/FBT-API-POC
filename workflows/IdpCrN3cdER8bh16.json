@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-09T22:30:50.643Z",
+  "updatedAt": "2026-11-10T01:56:34.384Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -319,8 +319,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -608,
-        384
+        -768,
+        -48
       ]
     },
     {
@@ -850,15 +850,15 @@
             }
           ]
         },
-        "limit": 1
+        "returnAll": true
       },
       "id": "97900e9b-7127-4d5d-9ce8-954b369cbabc",
       "name": "Get Ledger Row",
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -624,
-        -272
+        -736,
+        -256
       ],
       "alwaysOutputData": true
     },
@@ -892,8 +892,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -144,
-        -288
+        -816,
+        -880
       ]
     },
     {
@@ -917,8 +917,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        128,
-        -368
+        112,
+        -256
       ]
     },
     {
@@ -934,8 +934,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        128,
-        -160
+        112,
+        -64
       ]
     },
     {
@@ -1039,8 +1039,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -160,
-        -16
+        112,
+        -432
       ]
     },
     {
@@ -1442,8 +1442,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -448,
-        -272
+        -1120,
+        -864
       ]
     },
     {
@@ -1665,6 +1665,288 @@
       ],
       "id": "80112395-b5e1-437f-a344-1924e521c7ff",
       "name": "Respond Auth Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.idem_key);\nif (rows.length === 0) {\n  return [{ json: { route: 'new' } }];\n}\n\nrows.sort((a, b) => Number(a.id) - Number(b.id));\nconst row = rows[0];\nconst status = String(row.status ?? '');\n\nconst out = (route) => [{ json: { route, row } }];\n\nif (status === 'COMPLETED') return out('replay');\nif (status === 'PAID') return out('resume_post_payment');\nif (status === 'PAYMENT_FAILED') return out('resume_payment');\nif (status === 'PAYMENT_PENDING' || status === 'PAYMENT_UNKNOWN') return out('pending');\nif (status === 'SO_CREATED') return out('resume_payment');\nif (status === 'FAILED_CRM') return out('retry_crm');\nif (status === 'CRM_UNKNOWN') return out('pending_reconciliation');\nif (status === 'AMOUNT_MISMATCH') return out('terminal');\n\nif (status === 'PROCESSING') {\n  const ts = Date.parse(row.updatedAt ?? row.createdAt ?? 0);\n  const ageMs = Number.isFinite(ts) ? Date.now() - ts : Infinity;\n  return out(ageMs < 2 * 60 * 1000 ? 'in_progress' : 'stale');\n}\n\nreturn out('unknown');"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        -256
+      ],
+      "id": "26948ae6-859d-413a-9762-08479120259c",
+      "name": "Route Ledger"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "new",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c8a36e3d-ccda-4656-9a31-c7cef046dc3b"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "new"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "16f24c2c-049a-4ee4-bf93-977ee5880f4e",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "replay",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "replay"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "24baed56-4f7a-4a58-9e0b-5a7ea9631477",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "resume_payment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resume_payment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4c47479e-7ff9-4882-bf56-ee72324f5b7d",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "resume_post_payment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resume_post_payment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e7d6a98d-38f9-49e6-9fae-890dc382a171",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "pending",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pending"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bf0c16d8-a71c-44b0-a960-e85b3b9fc029",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "in_progess",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "in_progress"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b2e277c8-ee22-4ae5-85aa-b8e0d777dae1",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "stale",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "stale"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "596bc24e-a9ce-48a6-b10d-1fb0564e18f6",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "retry_crm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "retry_crm"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6aa32611-717d-4fb3-bf2d-b41a9e319782",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "pending_reconciliation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pending_reconciliation"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5da3223e-fa17-42bb-b8fd-9248e6e9abd2",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "terminal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "terminal"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "unknown"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        -400
+      ],
+      "id": "115292cc-13c5-4198-9c35-8dc235e06767",
+      "name": "Switch"
     }
   ],
   "connections": {
@@ -2017,7 +2299,7 @@
       "main": [
         [
           {
-            "node": "Ledger Row Exists?",
+            "node": "Route Ledger",
             "type": "main",
             "index": 0
           }
@@ -2026,20 +2308,8 @@
     },
     "Has Stored Response?": {
       "main": [
-        [
-          {
-            "node": "Respond Replay",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond In Progress",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [],
+        []
       ]
     },
     "Claim Ledger": {
@@ -2164,13 +2434,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Claim Ledger",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Validate Input": {
@@ -2245,6 +2509,44 @@
           }
         ]
       ]
+    },
+    "Route Ledger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Claim Ledger",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Replay",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [],
+        [
+          {
+            "node": "Respond In Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -2285,18 +2587,6 @@
       ]
     },
     {
-      "id": "1914c384-6c4a-4c16-a31b-9894095973cb",
-      "name": "Idempotency check",
-      "nodeIds": [
-        "97900e9b-7127-4d5d-9ce8-954b369cbabc",
-        "448d2d58-11a3-466d-8b01-a860c625984d",
-        "6df2b218-1011-4196-9207-7fa7b18275a5",
-        "fa408ec9-102f-4345-9b10-578acae775b9",
-        "3e4ddf0b-41f6-49e4-9c26-454c35344b4b",
-        "e103272a-add0-4b1d-9fb6-587eb41adcf1"
-      ]
-    },
-    {
       "id": "f5f8aab9-f7e8-453a-96af-12db2f719499",
       "name": "Create Sales Order",
       "nodeIds": [
@@ -2330,9 +2620,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "0d94731c-6241-4d0d-83e7-9f796924afad",
+  "versionId": "d496fd3d-bd0e-4364-bf7a-cf6c6128bebf",
   "activeVersionId": "0d94731c-6241-4d0d-83e7-9f796924afad",
-  "versionCounter": 775,
+  "versionCounter": 887,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -2357,7 +2647,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 0d94731c",
-    "description": ""
+    "name": null,
+    "description": null
   }
 }
