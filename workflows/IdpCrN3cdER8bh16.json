@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-10T01:56:34.384Z",
+  "updatedAt": "2026-11-11T20:49:28.811Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -2228,13 +2228,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "Build Confirmation",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Upload to Drive": {
@@ -2620,9 +2614,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "d496fd3d-bd0e-4364-bf7a-cf6c6128bebf",
+  "versionId": "0b9493c3-35f4-44a7-850a-102b040cee32",
   "activeVersionId": "0d94731c-6241-4d0d-83e7-9f796924afad",
-  "versionCounter": 887,
+  "versionCounter": 889,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],

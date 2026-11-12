@@ -1,0 +1,3038 @@
+{
+  "updatedAt": "2026-11-12T07:48:05.045Z",
+  "createdAt": "2026-11-11T19:05:04.348Z",
+  "id": "55ty9WMD5eBWXnoB",
+  "name": "order.pay",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "order_id"
+            },
+            {
+              "name": "customer_id"
+            },
+            {
+              "name": "customer_reference_number"
+            },
+            {
+              "name": "amount_cents",
+              "type": "number"
+            },
+            {
+              "name": "idem_key"
+            },
+            {
+              "name": "payment_attempt",
+              "type": "number"
+            },
+            {
+              "name": "request_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "77774126-30dc-4528-b1b7-86d3180f1b56",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "R5qrBqVvgf8IB7uS",
+          "mode": "list",
+          "cachedResultName": "api_customers",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.customer_id }}"
+            }
+          ]
+        },
+        "limit": 1
+      },
+      "id": "5ee71379-8a20-40d9-8b42-2badeccc4628",
+      "name": "Get Stripe Customer",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "94dede40-3cfa-4fa2-bd10-bf7a0e1426d4",
+      "name": "Has Card on File?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        368,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/payment_intents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "stripeApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "={{ $json.idem_key }}:payment:{{ $json.payment_attempt }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "amount",
+              "value": "={{ $json.amount_cents }}"
+            },
+            {
+              "name": "currency",
+              "value": "usd"
+            },
+            {
+              "name": "customer",
+              "value": "={{ $('Get Stripe Customer').first().json.stripe_customer_id }}"
+            },
+            {
+              "name": "payment_method",
+              "value": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}"
+            },
+            {
+              "name": "off_session",
+              "value": "true"
+            },
+            {
+              "name": "confirm",
+              "value": "true"
+            },
+            {
+              "name": "capture_method",
+              "value": "automatic"
+            },
+            {
+              "name": "description",
+              "value": "=Order {{ $json.order_id }}"
+            },
+            {
+              "name": "metadata[order_id]",
+              "value": "={{ $json.order_id }}"
+            },
+            {
+              "name": "metadata[customer_id]",
+              "value": "={{ $json.customer_id }}"
+            },
+            {
+              "name": "metadata[customer_reference_number]",
+              "value": "={{ $json.customer_reference_number }}"
+            },
+            {
+              "name": "error_on_requires_action",
+              "value": "true"
+            },
+            {
+              "name": "metadata[idem_key]",
+              "value": "={{ $json.idem_key }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "cda4fe4e-ca6b-4de0-9866-dfbf814efd9d",
+      "name": "Create Payment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        688,
+        -144
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2,
+      "maxTries": 3,
+      "credentials": {
+        "stripeApi": {
+          "id": "WMHjTKO19ynUAUR6",
+          "name": "Stripe - fbt-dev"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $input.first().json;\nconst http = Number(r.statusCode ?? 0);\nconst body = r.body ?? {};\nconst err = body.error ?? {};\n// A 402 card error may carry the PaymentIntent under error.payment_intent.\nconst pi = body.id ?? body.error?.payment_intent?.id ?? null;\nconst st = body.status ?? null;\n\nconst out = (o) => [{ json: { ...o, stripe_pi_id: pi } }];\n\nif (http === 200 && st === 'succeeded') {\n  return out({ outcome: 'paid', httpStatus: 0, payment_error_code: null, payment_error_message: null });\n}\nif (http === 200 && st === 'processing') {\n  return out({ outcome: 'pending', httpStatus: 202, payment_error_code: null, payment_error_message: null });\n}\nif (http === 200 && st === 'requires_action') {\n  return out({ outcome: 'action_required', httpStatus: 402, payment_error_code: 'AUTHENTICATION_REQUIRED', payment_error_message: 'This card requires authentication and the customer is not present.' });\n}\nif (http === 200 && st === 'requires_capture') {\n  return out({ outcome: 'error', httpStatus: 500, payment_error_code: 'CAPTURE_REQUIRED', payment_error_message: 'Payment authorized but not captured.' });\n}\nif (http === 402) {\n  return out({ outcome: 'failed', httpStatus: 402, payment_error_code: err.code ?? 'card_declined', payment_error_message: err.message ?? 'Card declined', decline_code: err.decline_code ?? null });\n}\nif (http === 429 || http >= 500) {\n  return out({ outcome: 'unknown', httpStatus: http === 429 ? 429 : 503, payment_error_code: err.code ?? `http_${http}`, payment_error_message: err.message ?? 'Payment provider unavailable' });\n}\nreturn out({ outcome: 'error', httpStatus: 500, payment_error_code: err.code ?? `http_${http}`, payment_error_message: err.message ?? 'Payment request failed' });"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        -160
+      ],
+      "id": "f334d19a-9e40-437a-b519-a6bd288f6195",
+      "name": "Classify Payment"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{  $json.outcome }}",
+                    "rightValue": "paid",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "a0242b21-88fe-4351-90b6-164901eace76"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "paid"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "324161fc-b616-4e84-8664-a23c748f1298",
+                    "leftValue": "={{  $json.outcome }}",
+                    "rightValue": "failed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c183d39f-8639-4a1e-b5e8-28362854449a",
+                    "leftValue": "={{  $json.outcome }}",
+                    "rightValue": "pending",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pending"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "fc0945e4-8af2-4782-aba7-bc8fd7e5cf6c",
+                    "leftValue": "={{  $json.outcome }}",
+                    "rightValue": "action_required",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "action_required"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "277d950b-b922-489d-b86b-c1f1078a6910",
+                    "leftValue": "={{  $json.outcome }}",
+                    "rightValue": "unknown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "unknown"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "3e11b39b-1c96-443f-b149-a55366803f45",
+                    "leftValue": "={{  $json.outcome }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        -224
+      ],
+      "id": "c22bd0d4-90a7-4a02-bc48-96e65e5fef47",
+      "name": "Payment Outcome"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAID",
+            "stripe_pi_id": "={{ $json.stripe_pi_id }}",
+            "paid_at": "={{ $now.toISO() }}",
+            "payment_error_code": "={{''}}",
+            "payment_error_message": "={{''}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        -624
+      ],
+      "id": "2541ca13-4b63-4556-964c-91f12a90205b",
+      "name": "Record Paid",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_FAILED",
+            "payment_error_message": "No payment method on file for this customer.",
+            "last_error_code": "PAYMENT_METHOD_MISSING",
+            "payment_error_code": "PAYMENT_METHOD_MISSING",
+            "stripe_pi_id": "={{ '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        224
+      ],
+      "id": "e60c51dd-9e7b-46f3-9c6b-d1cf58e8d413",
+      "name": "Record No Payment On File",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_FAILED",
+            "payment_error_code": "={{ $json.payment_error_code }}",
+            "payment_error_message": "={{ $json.payment_error_message }}",
+            "stripe_pi_id": "={{ $json.stripe_pi_id }}",
+            "last_error_code": "={{ $json.payment_error_code }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        -416
+      ],
+      "id": "3e4be2b6-b11a-4728-ac4b-0e2911c6d31d",
+      "name": "Record Payment Failed",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_PENDING",
+            "stripe_pi_id": "={{ $json.stripe_pi_id }}",
+            "last_error_code": "={{ '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        -224
+      ],
+      "id": "a7500c2c-e5e7-4c89-be03-44e3defc87ed",
+      "name": "Record Payment Pending",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_FAILED",
+            "payment_error_code": "AUTHENTICATION_REQUIRED",
+            "payment_error_message": "This card requires authentication and the customer is not present.",
+            "stripe_pi_id": "={{ $json.stripe_pi_id }}",
+            "last_error_code": "AUTHENTICATION_REQUIRED"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        -48
+      ],
+      "id": "0d8035d2-0031-4a91-b275-f4773043d212",
+      "name": "Record Action Required",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_UNKNOWN",
+            "payment_error_code": "={{ $json.payment_error_code }}",
+            "payment_error_message": "={{ $json.payment_error_message }}",
+            "stripe_pi_id": "={{ $json.stripe_pi_id }}",
+            "last_error_code": "={{ $json.payment_error_code }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        144
+      ],
+      "id": "28e58e1f-fd0a-4c86-970b-b76caf44ba56",
+      "name": "Record Unknown",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_UNKNOWN",
+            "payment_error_message": "Internal payment error.",
+            "last_error_code": "INTERNAL_ERROR",
+            "stripe_pi_id": "={{ $json.stripe_pi_id }}",
+            "payment_error_code": "={{ $('Classify Payment').first().json.payment_error_code }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        320
+      ],
+      "id": "f8320195-05c1-4c06-b4c9-fd8b2b24d362",
+      "name": "Record Error",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "unknown",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": "={{ $('Classify Payment').first().json.httpStatus }}",
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ $('Classify Payment').first().json.stripe_pi_id }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "={{ $('Classify Payment').first().json.payment_error_code }}",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "={{ $('Classify Payment').first().json.payment_error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        144
+      ],
+      "id": "d816921e-af6d-459b-b84e-9964e58b8e0d",
+      "name": "Return Result (unknown)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "unknown",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 504,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "PAYMENT_TRANSPORT_ERROR",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "Payment provider did not respond.",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1136,
+        32
+      ],
+      "id": "f59cb486-20b2-48be-a99a-b2f97e93b372",
+      "name": "Return Results (transport)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_UNKNOWN",
+            "payment_error_message": "Payment provider did not respond.",
+            "last_error_code": "PAYMENT_TRANSPORT_ERROR",
+            "payment_error_code": "PAYMENT_TRANSPORT_ERROR",
+            "stripe_pi_id": "={{ '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_idupload_status",
+              "displayName": "execution_idupload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        944,
+        32
+      ],
+      "id": "9d4a39b4-3401-4f28-9fd3-deaf043a6700",
+      "name": "Record Transport Unknown",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "29f5e029-f59e-4a23-90c9-63a30b3048d5",
+              "name": "outcome",
+              "value": "paid",
+              "type": "string"
+            },
+            {
+              "id": "d98533fe-5ba6-4f33-aed9-7fad0ff9dbb3",
+              "name": "stripe_pi_id",
+              "value": "={{ $('Classify Payment').first().json.stripe_pi_id }}",
+              "type": "string"
+            },
+            {
+              "id": "e31c1ae6-6695-4c34-9c5b-af47e081bdbe",
+              "name": "httpStatus",
+              "value": 201,
+              "type": "number"
+            },
+            {
+              "id": "faf79924-65c4-4496-ac76-7a634e952ffc",
+              "name": "payment_error_code",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "3e4ed0a9-437e-4f9c-8f85-94130a039307",
+              "name": "payment_error_message",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "5bdcc54b-9d49-4801-af89-d1aacf290a86",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        -624
+      ],
+      "id": "ed1dd823-b33e-48ce-a5e0-63c8da2d5b01",
+      "name": "Return Result (paid)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "failed",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 402,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ $('Classify Payment').first().json.stripe_pi_id }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "={{ $('Classify Payment').first().json.payment_error_code }}",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "={{ $('Classify Payment').first().json.payment_error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ $('Classify Payment').first().json.decline_code }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        -416
+      ],
+      "id": "5e10630d-fd3c-4927-a276-63a13d42922b",
+      "name": "Return Result (failed)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "action_required",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 402,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ $('Classify Payment').first().json.stripe_pi_id }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "AUTHENTICATION_REQUIRED",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "This card requires authentication and the customer is not present.",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        -48
+      ],
+      "id": "42fca38e-b752-49a2-9aa8-1c466e6aa4d4",
+      "name": "Return Result (action_required)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "pending",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 202,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ $('Classify Payment').first().json.stripe_pi_id }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        -224
+      ],
+      "id": "36591067-1c32-4a86-ad48-b0f80e21d4ae",
+      "name": "Return Result (pending)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "error",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 500,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ $('Classify Payment').first().json.stripe_pi_id }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "={{ $('Classify Payment').first().json.payment_error_code }}",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "={{ $('Classify Payment').first().json.payment_error_message }}",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2048,
+        320
+      ],
+      "id": "f9e07a15-fc4b-441c-af57-343a66794c52",
+      "name": "Return Result (error)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "no_card",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 402,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "PAYMENT_METHOD_MISSING",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "No payment method on file for this customer.",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        944,
+        224
+      ],
+      "id": "22022bd5-a7db-4bdd-9885-220947e7e4da",
+      "name": "Return Result (no_card)"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Stripe Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Stripe Customer": {
+      "main": [
+        [
+          {
+            "node": "Has Card on File?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Card on File?": {
+      "main": [
+        [
+          {
+            "node": "Create Payment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record No Payment On File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Payment": {
+      "main": [
+        [
+          {
+            "node": "Classify Payment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Transport Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Payment": {
+      "main": [
+        [
+          {
+            "node": "Payment Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Outcome": {
+      "main": [
+        [
+          {
+            "node": "Record Paid",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Payment Pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Action Required",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Paid": {
+      "main": [
+        [
+          {
+            "node": "Return Result (paid)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Action Required": {
+      "main": [
+        [
+          {
+            "node": "Return Result (action_required)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Unknown": {
+      "main": [
+        [
+          {
+            "node": "Return Result (unknown)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Error": {
+      "main": [
+        [
+          {
+            "node": "Return Result (error)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Payment Failed": {
+      "main": [
+        [
+          {
+            "node": "Return Result (failed)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Payment Pending": {
+      "main": [
+        [
+          {
+            "node": "Return Result (pending)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record No Payment On File": {
+      "main": [
+        [
+          {
+            "node": "Return Result (no_card)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Transport Unknown": {
+      "main": [
+        [
+          {
+            "node": "Return Results (transport)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "62d8f56a-a6f4-4fd5-b62e-f9b6f9ae6caf",
+  "activeVersionId": "5ee94550-6780-497a-8de5-323cf1dd1cd2",
+  "versionCounter": 400,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-11-11T19:05:04.353Z",
+      "createdAt": "2026-11-11T19:05:04.353Z",
+      "role": "workflow:owner",
+      "workflowId": "55ty9WMD5eBWXnoB",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
