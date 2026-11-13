@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-11T20:49:28.811Z",
+  "updatedAt": "2026-11-13T20:26:27.254Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -132,8 +132,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        480,
-        -16
+        784,
+        -1392
       ],
       "executeOnce": true,
       "credentials": {
@@ -152,8 +152,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1152,
-        -16
+        1456,
+        -1392
       ],
       "onError": "continueErrorOutput"
     },
@@ -193,8 +193,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1408,
-        -32
+        1712,
+        -1408
       ],
       "credentials": {
         "httpBasicAuth": {
@@ -243,8 +243,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1616,
-        -80
+        1920,
+        -1456
       ]
     },
     {
@@ -256,7 +256,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4528,
+        6336,
         -240
       ]
     },
@@ -271,7 +271,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        4752,
+        6560,
         -240
       ]
     },
@@ -284,7 +284,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5648,
+        7456,
         -240
       ],
       "executeOnce": true
@@ -302,7 +302,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6240,
+        8048,
         -240
       ]
     },
@@ -346,80 +346,6 @@
     },
     {
       "parameters": {
-        "operation": "get",
-        "dataTableId": {
-          "__rl": true,
-          "value": "R5qrBqVvgf8IB7uS",
-          "mode": "list",
-          "cachedResultName": "api_customers",
-          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/R5qrBqVvgf8IB7uS"
-        },
-        "matchType": "allConditions",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "customer_id",
-              "keyValue": "={{ $('Build Context').item.json.customer_id }}"
-            }
-          ]
-        },
-        "limit": 1
-      },
-      "id": "583ee8a9-5301-430f-8ee8-7dbb9397b434",
-      "name": "Get Stripe Customer",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        2912,
-        -32
-      ],
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            },
-            {
-              "leftValue": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "notEmpty",
-                "singleValue": true
-              }
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "id": "f68daa8f-464c-47f1-9aa4-f79313398b92",
-      "name": "Has Card on File?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        3136,
-        -32
-      ]
-    },
-    {
-      "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { error: { code: 'PAYMENT_METHOD_MISSING', message: 'No payment method on file for this customer.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [] } } }}",
         "options": {
@@ -431,139 +357,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3488,
-        96
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://api.stripe.com/v1/payment_intents",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "stripeApi",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Idempotency-Key",
-              "value": "={{ $('Build Context').item.json.idem_key }}:payment"
-            }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "form-urlencoded",
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "amount",
-              "value": "={{ $('Compute Tax').item.json.total_with_tax_cents }}"
-            },
-            {
-              "name": "currency",
-              "value": "usd"
-            },
-            {
-              "name": "customer",
-              "value": "={{ $('Get Stripe Customer').item.json.stripe_customer_id }}"
-            },
-            {
-              "name": "payment_method",
-              "value": "={{ $('Get Stripe Customer').item.json.stripe_payment_method_id }}"
-            },
-            {
-              "name": "off_session",
-              "value": "true"
-            },
-            {
-              "name": "confirm",
-              "value": "true"
-            },
-            {
-              "name": "capture_method",
-              "value": "automatic"
-            },
-            {
-              "name": "description",
-              "value": "=Order {{ $('Build Context').item.json.order_id }}"
-            },
-            {
-              "name": "metadata[order_id]",
-              "value": "={{ $('Build Context').item.json.order_id }}"
-            },
-            {
-              "name": "metadata[customer_id]",
-              "value": "={{ $('Build Context').item.json.customer_id }}"
-            },
-            {
-              "name": "metadata[customer_reference_number]",
-              "value": "={{ $('Build Context').item.json.customer_reference_number }}"
-            }
-          ]
-        },
-        "options": {
-          "response": {
-            "response": {
-              "fullResponse": true,
-              "neverError": true
-            }
-          }
-        }
-      },
-      "id": "046115d0-ccf8-4ed0-afc8-7dc83ba84095",
-      "name": "Create Payment",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.3,
-      "position": [
-        3488,
-        -96
-      ],
-      "credentials": {
-        "stripeApi": {
-          "id": "WMHjTKO19ynUAUR6",
-          "name": "Stripe - fbt-dev"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "loose",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.statusCode }}",
-              "rightValue": 200,
-              "operator": {
-                "type": "number",
-                "operation": "equals"
-              }
-            },
-            {
-              "leftValue": "={{ [\"succeeded\", \"processing\"] }}",
-              "rightValue": "={{ $json.body.status }}",
-              "operator": {
-                "type": "array",
-                "operation": "contains",
-                "rightType": "any"
-              }
-            }
-          ]
-        },
-        "looseTypeValidation": true,
-        "options": {}
-      },
-      "id": "a51bc05f-0e11-4f24-b6a4-89351240d6d3",
-      "name": "Payment OK?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        3760,
-        -80
+        4048,
+        -1600
       ]
     },
     {
@@ -597,8 +392,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        4032,
-        -128
+        4320,
+        -1920
       ],
       "credentials": {
         "httpBasicAuth": {
@@ -620,8 +415,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4032,
-        80
+        4048,
+        -1744
       ]
     },
     {
@@ -633,8 +428,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        704,
-        -16
+        1008,
+        -1392
       ]
     },
     {
@@ -668,8 +463,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        928,
-        -16
+        1232,
+        -1392
       ]
     },
     {
@@ -685,8 +480,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1408,
-        320
+        1712,
+        -1056
       ]
     },
     {
@@ -696,7 +491,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4976,
+        6784,
         -240
       ],
       "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
@@ -729,7 +524,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        5184,
+        6992,
         -224
       ],
       "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
@@ -757,7 +552,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        5424,
+        7232,
         -240
       ],
       "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
@@ -917,8 +712,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        112,
-        -256
+        96,
+        -608
       ]
     },
     {
@@ -1039,8 +834,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        112,
-        -432
+        96,
+        -784
       ]
     },
     {
@@ -1110,8 +905,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2384,
-        -192
+        2688,
+        -1568
       ]
     },
     {
@@ -1170,8 +965,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2256,
-        320
+        2560,
+        -1056
       ]
     },
     {
@@ -1241,7 +1036,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5936,
+        7744,
         -240
       ]
     },
@@ -1264,8 +1059,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2464,
-        -16
+        2768,
+        -1392
       ],
       "id": "2fe1420d-f17f-4194-a443-f64667104a01",
       "name": "Respond CRM Unavailable"
@@ -1298,8 +1093,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1952,
-        0
+        2256,
+        -1376
       ],
       "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
       "name": "Is CRM Error Retryable?"
@@ -1328,8 +1123,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2256,
-        -16
+        2560,
+        -1392
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
       "name": "Delete Claim",
@@ -1348,8 +1143,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2448,
-        320
+        2752,
+        -1056
       ]
     },
     {
@@ -1534,8 +1329,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1152,
-        320
+        1456,
+        -1056
       ],
       "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
       "name": "Delete Claim (Lookup)",
@@ -1582,8 +1377,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1408,
-        144
+        1712,
+        -1232
       ],
       "id": "20913296-2538-4038-a760-5c1068177ab5",
       "name": "Delete Claim (Build)",
@@ -1600,8 +1395,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1616,
-        144
+        1920,
+        -1232
       ],
       "id": "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
       "name": "Respond Build Error"
@@ -1942,11 +1737,391 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -416,
+        -384,
         -400
       ],
       "id": "115292cc-13c5-4198-9c35-8dc235e06767",
-      "name": "Switch"
+      "name": "Route Ledger Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json; // route + ledger row\nconst status = String(row.status ?? '');\nconst previousAttempt = Number(row.payment_attempt ?? 0);\n\n// New attempt only after a recorded failure.\n// Unknown/pending/SO_CREATED must reuse the same Stripe key.\nlet paymentAttempt;\nif (status === 'PAYMENT_FAILED') {\n  paymentAttempt = previousAttempt + 1;\n} else if (previousAttempt > 0) {\n    paymentAttempt = previousAttempt;\n} else {\n  paymentAttempt = 1;\n}\n\nreturn [{\n  json: {\n    order_id: row.order_id,\n    customer_id: row.customer_id,\n    customer_reference_number: row.customer_reference_number,\n    amount_cents: Number(row.amount_cents ?? 0),\n    idem_key: row.idem_key,\n    payment_attempt: paymentAttempt,\n    request_id: $('Request ID').first().json.requestId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -448
+      ],
+      "id": "e4b3e7bd-f1e9-4403-85ba-1a2070fb654d",
+      "name": "Prepare Payment Context"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: {\n  order_id: $('Build Context').first().json.order_id,\n  customer_id: $('Build Context').first().json.customer_id,\n  customer_reference_number: $('Build Context').first().json.customer_reference_number,\n  amount_cents: $('Compute Tax').first().json.total_with_tax_cents,\n  idem_key: $('Build Context').first().json.idem_key,\n  payment_attempt: 1,\n  request_id: $('Request ID').first().json.requestId\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3088,
+        -1584
+      ],
+      "id": "8f97a045-e2a7-4568-a4ab-fe536137f279",
+      "name": "Prepare Payment Input"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "55ty9WMD5eBWXnoB",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/55ty9WMD5eBWXnoB",
+          "cachedResultName": "order.pay"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "request_id",
+              "displayName": "request_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        3360,
+        -1472
+      ],
+      "id": "3b8ef798-e090-4f89-86e1-d44a906ef7f0",
+      "name": "Call 'order.pay'"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "paid",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "ff6eb3ca-e913-4edc-a27a-4a328885291a"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "paid"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ed443282-ebc4-4a75-82bd-798f60e4ae88",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "failed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bef53024-902a-479d-aa6c-2a593641a83c",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "no_card",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no_card"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8c4fb15e-e398-410d-951a-bcc7c8004140",
+                    "leftValue": "",
+                    "rightValue": "action_required",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "action_required"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c39bdea2-8a72-4172-8678-69790eba45cf",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "pending",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pending"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "902df2b8-b848-440b-8b21-2248798647bf",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "unknown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "unknown"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0f82b9b8-3779-4e7b-b72a-b51032d9ac30",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "error"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        3664,
+        -1552
+      ],
+      "id": "8d5220a3-3b9a-4ce1-bdf8-f936e46b0a13",
+      "name": "Payment Outcome"
+    },
+    {
+      "parameters": {
+        "jsCode": "const safe = (get) => {\n  try { return get(); } catch { return {}; }\n};\n\nconst here = $input.first().json;   // paid: Call 'order.pay' output; resume: ledger row\nconst build = safe(() => $('Build Context').first().json);\nconst record = safe(() => $('Record SO Created').first().json);\nconst create = safe(() => $('Create SalesOrder').first().json);\nconst pay = safe(() => $(\"Call 'order.pay'\").first().json);\nconst ledger = safe(() => $('Route Ledger').first().json);\n\nconst vtiger_so_id =\n  here.vtiger_so_id ??\n  record.vtiger_so_id ??\n  create.body?.result?.id ??\n  ledger.vtiger_so_id ??\n  null;\n\nconst stripe_pi_id =\n  pay.stripe_pi_id ??\n  here.stripe_pi_id ??\n  ledger.stripe_pi_id ??\n  null;\n\nreturn [{ json: {\n  vtiger_base_url: build.vtiger_base_url ?? null,\n  vtiger_so_id,\n  stripe_pi_id,\n  order_id: build.order_id ?? here.order_id ?? ledger.order_id ?? null,\n  customer_reference_number:\n    build.customer_reference_number ?? here.customer_reference_number ??\n    ledger.customer_reference_number ?? null,\n  request_id: first('Request ID').requestId ?? null\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4048,
+        -1920
+      ],
+      "id": "47d0119a-70f8-42fc-8241-fde2366f7ed3",
+      "name": "Prepare Post Payment Context"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: 'PAYMENT_METHOD_MISSING', message: 'No payment method on file for this customer.', retryable: false, requestId: $('Request ID').first().json.requestId, details: [] } } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4048,
+        -1440
+      ],
+      "id": "a2f038b7-2386-440b-9d6d-1dac17a62b8c",
+      "name": "Respond Payment Pending"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: $json.payment_error_code ?? 'PAYMENT_UNKNOWN', message: $json.payment_error_message ?? 'Payment outcome unknown. Retry with the same customerReferenceNumber.', retryable: true, requestId: $('Request ID').first().json.requestId, details: [{ payment_intent_id: $json.stripe_pi_id ?? null }] } } }}\n",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4048,
+        -1248
+      ],
+      "id": "f013570c-d304-4633-92fa-793782105c7e",
+      "name": "Respond Unknown"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: $json.payment_error_code ?? 'PAYMENT_INTERNAL_ERROR', message: 'Internal payment error. Do not start a new order; contact support with this order id.', retryable: false, requestId: $('Request ID').first().json.requestId, details: [{ order_id: $json.order_id ?? null }] } } }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        4048,
+        -1072
+      ],
+      "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
+      "name": "Respond Error"
     }
   ],
   "connections": {
@@ -2110,64 +2285,6 @@
         ]
       ]
     },
-    "Get Stripe Customer": {
-      "main": [
-        [
-          {
-            "node": "Has Card on File?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Has Card on File?": {
-      "main": [
-        [
-          {
-            "node": "Create Payment",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond No Card",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Payment": {
-      "main": [
-        [
-          {
-            "node": "Payment OK?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Payment OK?": {
-      "main": [
-        [
-          {
-            "node": "Mark SO Paid",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond Payment Failed",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Mark SO Paid": {
       "main": [
         [
@@ -2321,7 +2438,7 @@
       "main": [
         [
           {
-            "node": "Get Stripe Customer",
+            "node": "Prepare Payment Input",
             "type": "main",
             "index": 0
           }
@@ -2508,14 +2625,14 @@
       "main": [
         [
           {
-            "node": "Switch",
+            "node": "Route Ledger Switch",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Switch": {
+    "Route Ledger Switch": {
       "main": [
         [
           {
@@ -2531,7 +2648,13 @@
             "index": 0
           }
         ],
-        [],
+        [
+          {
+            "node": "Prepare Payment Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [],
         [
           {
@@ -2540,6 +2663,118 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Prepare Payment Context": {
+      "main": [
+        [
+          {
+            "node": "Call 'order.pay'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Payment Input": {
+      "main": [
+        [
+          {
+            "node": "Call 'order.pay'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'order.pay'": {
+      "main": [
+        [
+          {
+            "node": "Payment Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payment Outcome": {
+      "main": [
+        [
+          {
+            "node": "Prepare Post Payment Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond No Card",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Failed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Pending",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Post Payment Context": {
+      "main": [
+        [
+          {
+            "node": "Mark SO Paid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond No Card": {
+      "main": [
+        []
+      ]
+    },
+    "Respond Payment Pending": {
+      "main": [
+        []
+      ]
+    },
+    "Respond Unknown": {
+      "main": [
+        []
       ]
     }
   },
@@ -2552,20 +2787,6 @@
     "templateCredsSetupCompleted": true
   },
   "nodeGroups": [
-    {
-      "id": "63a93a3d-bb3b-409d-8f55-213b3667c576",
-      "name": "Charge card on file",
-      "nodeIds": [
-        "583ee8a9-5301-430f-8ee8-7dbb9397b434",
-        "f68daa8f-464c-47f1-9aa4-f79313398b92",
-        "2e583d71-5e9d-489b-9fd3-ee3a0f34bf86",
-        "046115d0-ccf8-4ed0-afc8-7dc83ba84095",
-        "a51bc05f-0e11-4f24-b6a4-89351240d6d3",
-        "f4871f25-78ce-48d0-8bce-0eb4272dc30f",
-        "8197fa72-d286-4d09-87ef-ba257f65a0f6"
-      ],
-      "description": "After the held sales order exists: charges the saved card, marks the order paid, or returns 402 and leaves it on hold"
-    },
     {
       "id": "7632e978-d49c-4d78-b00b-363078264339",
       "name": "Upload datafiles",
@@ -2614,9 +2835,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "0b9493c3-35f4-44a7-850a-102b040cee32",
+  "versionId": "07de3717-a2fe-4bea-90f6-119db93c1879",
   "activeVersionId": "0d94731c-6241-4d0d-83e7-9f796924afad",
-  "versionCounter": 889,
+  "versionCounter": 1011,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],

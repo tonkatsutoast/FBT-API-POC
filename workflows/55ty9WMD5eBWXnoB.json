@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-12T07:48:05.045Z",
+  "updatedAt": "2026-11-13T18:46:53.329Z",
   "createdAt": "2026-11-11T19:05:04.348Z",
   "id": "55ty9WMD5eBWXnoB",
   "name": "order.pay",
@@ -2176,59 +2176,6 @@
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
-              "name": "outcome",
-              "value": "unknown",
-              "type": "string"
-            },
-            {
-              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
-              "name": "httpStatus",
-              "value": 504,
-              "type": "number"
-            },
-            {
-              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
-              "name": "stripe_pi_id",
-              "value": "={{ null }}",
-              "type": "string"
-            },
-            {
-              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
-              "name": "payment_error_code",
-              "value": "PAYMENT_TRANSPORT_ERROR",
-              "type": "string"
-            },
-            {
-              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
-              "name": "payment_error_message",
-              "value": "Payment provider did not respond.",
-              "type": "string"
-            },
-            {
-              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
-              "name": "decline_code",
-              "value": "={{ null }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.5,
-      "position": [
-        1136,
-        32
-      ],
-      "id": "f59cb486-20b2-48be-a99a-b2f97e93b372",
-      "name": "Return Results (transport)"
-    },
-    {
-      "parameters": {
         "operation": "update",
         "dataTableId": {
           "__rl": true,
@@ -2790,6 +2737,59 @@
       ],
       "id": "22022bd5-a7db-4bdd-9885-220947e7e4da",
       "name": "Return Result (no_card)"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e4323a03-abec-45bb-8223-69a0503a2f80",
+              "name": "outcome",
+              "value": "unknown",
+              "type": "string"
+            },
+            {
+              "id": "882fd23a-3183-4aad-8b08-3ffd537a71d9",
+              "name": "httpStatus",
+              "value": 504,
+              "type": "number"
+            },
+            {
+              "id": "a17624cb-4975-4bda-b7ee-170e9258de9b",
+              "name": "stripe_pi_id",
+              "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "48e09578-a36f-47d6-81ea-715de6e972c2",
+              "name": "payment_error_code",
+              "value": "PAYMENT_TRANSPORT_ERROR",
+              "type": "string"
+            },
+            {
+              "id": "2348fe3c-adff-4261-b2d5-d939352f5ac0",
+              "name": "payment_error_message",
+              "value": "Payment provider did not respond.",
+              "type": "string"
+            },
+            {
+              "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
+              "name": "decline_code",
+              "value": "={{ null }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1136,
+        32
+      ],
+      "id": "f59cb486-20b2-48be-a99a-b2f97e93b372",
+      "name": "Return Result (transport)"
     }
   ],
   "connections": {
@@ -2989,7 +2989,7 @@
       "main": [
         [
           {
-            "node": "Return Results (transport)",
+            "node": "Return Result (transport)",
             "type": "main",
             "index": 0
           }
@@ -3005,9 +3005,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "62d8f56a-a6f4-4fd5-b62e-f9b6f9ae6caf",
+  "versionId": "f7bd6142-34a6-41cf-9e09-06a55823cd6d",
   "activeVersionId": "5ee94550-6780-497a-8de5-323cf1dd1cd2",
-  "versionCounter": 400,
+  "versionCounter": 401,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
