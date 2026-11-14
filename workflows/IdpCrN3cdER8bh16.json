@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13T23:34:53.436Z",
+  "updatedAt": "2026-11-14T02:27:33.232Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -243,8 +243,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2288,
-        -1072
+        2304,
+        -1120
       ]
     },
     {
@@ -256,8 +256,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7648,
-        -512
+        7744,
+        -736
       ]
     },
     {
@@ -271,8 +271,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        7872,
-        -512
+        7968,
+        -736
       ]
     },
     {
@@ -284,8 +284,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8768,
-        -512
+        8864,
+        -736
       ],
       "executeOnce": true
     },
@@ -302,8 +302,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        9360,
-        -512
+        9456,
+        -736
       ]
     },
     {
@@ -395,12 +395,15 @@
         6432,
         -864
       ],
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
       "credentials": {
         "httpBasicAuth": {
           "id": "jLqvj3hkJtbYAjcd",
           "name": "vtiger API"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -491,8 +494,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8096,
-        -512
+        8192,
+        -736
       ],
       "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
       "name": "Build Uploads"
@@ -524,8 +527,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        8304,
-        -496
+        8400,
+        -720
       ],
       "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
       "name": "Anything to upload?"
@@ -552,8 +555,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        8544,
-        -512
+        8640,
+        -736
       ],
       "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
       "name": "Upload to Drive",
@@ -1056,8 +1059,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2928,
-        -1200
+        2848,
+        -1168
       ]
     },
     {
@@ -1187,8 +1190,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        9056,
-        -512
+        9152,
+        -736
       ]
     },
     {
@@ -1210,8 +1213,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3024,
-        -1008
+        3040,
+        -960
       ],
       "id": "2fe1420d-f17f-4194-a443-f64667104a01",
       "name": "Respond CRM Unavailable"
@@ -1244,8 +1247,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2512,
-        -992
+        2528,
+        -1024
       ],
       "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
       "name": "Is CRM Error Retryable?"
@@ -1274,8 +1277,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2816,
-        -1008
+        2832,
+        -960
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
       "name": "Delete Claim",
@@ -2235,27 +2238,10 @@
       "typeVersion": 1.5,
       "position": [
         6160,
-        -352
+        -368
       ],
       "id": "a2f038b7-2386-440b-9d6d-1dac17a62b8c",
       "name": "Respond Payment Pending"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { error: { code: $json.payment_error_code ?? 'PAYMENT_INTERNAL_ERROR', message: 'Internal payment error. Do not start a new order; contact support with this order id.', retryable: false, requestId: $('Request ID').first().json.requestId, details: [{ order_id: $json.order_id ?? null }] } } }}",
-        "options": {
-          "responseCode": 500
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        6240,
-        208
-      ],
-      "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
-      "name": "Respond Error"
     },
     {
       "parameters": {
@@ -2647,6 +2633,337 @@
       ],
       "id": "3698f2a2-3a04-4a33-a414-e7ab34256329",
       "name": "Respond In Progress Heartbeat"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: { code: $json.payment_error_code ?? 'PAYMENT_INTERNAL_ERROR', message: 'Internal payment error. Do not start a new order; contact support with this order id.', retryable: false, requestId: $('Request ID').first().json.requestId, details: [{ order_id: $json.order_id ?? null }] } } }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        6192,
+        80
+      ],
+      "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
+      "name": "Respond Payment Error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6857e9fa-1847-4e78-9bd5-78ee19381795",
+              "leftValue": "={{ $json.body?.success === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        6800,
+        -976
+      ],
+      "id": "e9811430-aa2f-4608-bdb4-a880860c7e64",
+      "name": "Mark SO Paid OK?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Build Context').first().json.idem_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "error_message": "={{ $json.body?.error?.message ?? $json.error?.message ?? $json.error ?? 'VTiger revise failed' }}",
+            "last_error_code": "CRM_MARK_PAID_FAILED"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        7024,
+        -656
+      ],
+      "id": "d2f8bc5a-cc61-4d4c-a385-311baf6e8073",
+      "name": "Record Mark Update Failure",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  order_id: $('Prepare Post Payment Context').first().json.order_id,\n  salesorder_no: $('Prepare Post Payment Context').first().json.vtiger_so_number,\n  status: 'in process',\n  payment_status: 'paid',\n  crm_status: 'pending',\n  warning: 'Payment collected; VTiger payment status is pending reconciliation.',\n  requestId: $('Request ID').first().json.requestId\n} }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        6672,
+        -320
+      ],
+      "id": "626caa5c-9f08-480b-abf8-1a276906ce68",
+      "name": "Respond Created (CRM Pending)"
     }
   ],
   "connections": {
@@ -2814,7 +3131,14 @@
       "main": [
         [
           {
-            "node": "Students",
+            "node": "Mark SO Paid OK?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Mark Update Failure",
             "type": "main",
             "index": 0
           }
@@ -3305,7 +3629,7 @@
         ],
         [
           {
-            "node": "Respond Error",
+            "node": "Respond Payment Error",
             "type": "main",
             "index": 0
           }
@@ -3366,6 +3690,24 @@
           }
         ]
       ]
+    },
+    "Mark SO Paid OK?": {
+      "main": [
+        [
+          {
+            "node": "Students",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Mark Update Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -3403,7 +3745,7 @@
     },
     {
       "id": "02f4d33f-9768-42cd-b7ea-efc7468e05ae",
-      "name": "Group 1",
+      "name": "Create Vtiger Sales Order",
       "nodeIds": [
         "071b8519-d437-4c31-9798-6f1c18632f42",
         "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
@@ -3428,9 +3770,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "6fa31ebd-2e29-44eb-8fab-e082925747c5",
+  "versionId": "15117969-abaa-4d08-8b69-479d14aebda5",
   "activeVersionId": "27e7c2d7-8a3b-4c92-8396-53507340a20d",
-  "versionCounter": 1113,
+  "versionCounter": 1154,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
