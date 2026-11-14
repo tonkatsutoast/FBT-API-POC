@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-14T02:27:33.232Z",
+  "updatedAt": "2026-11-14T07:02:19.939Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -256,23 +256,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7744,
-        -736
-      ]
-    },
-    {
-      "parameters": {
-        "options": {
-          "fileName": "={{ $('Build Context').first().json.order_id }}_students.csv"
-        }
-      },
-      "id": "2e9b5bbd-4c0b-4406-b870-35c23a165670",
-      "name": "Students CSV",
-      "type": "n8n-nodes-base.convertToFile",
-      "typeVersion": 1.1,
-      "position": [
-        7968,
-        -736
+        6608,
+        -640
       ]
     },
     {
@@ -284,15 +269,16 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8864,
-        -736
+        7728,
+        -640
       ],
-      "executeOnce": true
+      "executeOnce": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $('Build Confirmation').item.json }}",
+        "responseBody": "={{ $('Build Confirmation').first().json }}",
         "options": {
           "responseCode": 201
         }
@@ -302,8 +288,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        9456,
-        -736
+        8320,
+        -640
       ]
     },
     {
@@ -357,8 +343,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6160,
-        -544
+        4848,
+        -592
       ]
     },
     {
@@ -392,8 +378,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        6432,
-        -864
+        5120,
+        -912
       ],
       "retryOnFail": true,
       "waitBetweenTries": 2000,
@@ -418,8 +404,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6160,
-        -688
+        4848,
+        -736
       ]
     },
     {
@@ -483,8 +469,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1568,
-        -784
+        1584,
+        -720
       ]
     },
     {
@@ -494,8 +480,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8192,
-        -736
+        7056,
+        -640
       ],
       "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
       "name": "Build Uploads"
@@ -527,8 +513,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        8400,
-        -720
+        7264,
+        -624
       ],
       "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
       "name": "Anything to upload?"
@@ -555,8 +541,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        8640,
-        -736
+        7504,
+        -640
       ],
       "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
       "name": "Upload to Drive",
@@ -1136,7 +1122,7 @@
           "conditions": [
             {
               "keyName": "idem_key",
-              "keyValue": "={{ $('Build Context').item.json.idem_key }}"
+              "keyValue": "={{ $('Build Context').first().json.idem_key }}"
             }
           ]
         },
@@ -1144,14 +1130,85 @@
           "mappingMode": "defineBelow",
           "value": {
             "status": "COMPLETED",
-            "stripe_pi_id": "={{ $('Create Payment').item.json.body.id }}",
-            "response_json": "={{ JSON.stringify($json) }}"
+            "stripe_pi_id": "={{ $('Prepare Post Payment Context').first().json.stripe_pi_id }}",
+            "response_json": "={{ JSON.stringify($('Build Confirmation').first().json) }}",
+            "last_error_code": "={{ '' }}"
           },
           "matchingColumns": [],
           "schema": [
             {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
               "id": "status",
               "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1170,12 +1227,132 @@
               "removed": false
             },
             {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
               "id": "response_json",
               "displayName": "response_json",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
               "readOnly": false,
               "removed": false
             }
@@ -1190,9 +1367,11 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        9152,
-        -736
-      ]
+        8016,
+        -640
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -1483,8 +1662,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1392,
-        -784
+        1408,
+        -720
       ],
       "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
       "name": "Delete Claim (Lookup)",
@@ -1917,8 +2096,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        5200,
-        -528
+        3888,
+        -576
       ],
       "id": "8f97a045-e2a7-4568-a4ab-fe536137f279",
       "name": "Prepare Payment Input"
@@ -2016,8 +2195,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        5472,
-        -416
+        4160,
+        -464
       ],
       "id": "3b8ef798-e090-4f89-86e1-d44a906ef7f0",
       "name": "Call 'order.pay'"
@@ -2207,8 +2386,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        5776,
-        -496
+        4464,
+        -544
       ],
       "id": "8d5220a3-3b9a-4ce1-bdf8-f936e46b0a13",
       "name": "Payment Outcome"
@@ -2220,8 +2399,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6160,
-        -864
+        4848,
+        -912
       ],
       "id": "47d0119a-70f8-42fc-8241-fde2366f7ed3",
       "name": "Prepare Post Payment Context"
@@ -2237,8 +2416,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6160,
-        -368
+        4848,
+        -416
       ],
       "id": "a2f038b7-2386-440b-9d6d-1dac17a62b8c",
       "name": "Respond Payment Pending"
@@ -2288,8 +2467,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6176,
-        -160
+        4864,
+        -208
       ],
       "id": "f013570c-d304-4633-92fa-793782105c7e",
       "name": "Respond Payment Unknown"
@@ -2645,8 +2824,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6192,
-        80
+        4880,
+        32
       ],
       "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
       "name": "Respond Payment Error"
@@ -2679,8 +2858,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        6800,
-        -976
+        5488,
+        -1024
       ],
       "id": "e9811430-aa2f-4608-bdb4-a880860c7e64",
       "name": "Mark SO Paid OK?"
@@ -2940,8 +3119,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        7024,
-        -656
+        5712,
+        -704
       ],
       "id": "d2f8bc5a-cc61-4d4c-a385-311baf6e8073",
       "name": "Record Mark Update Failure",
@@ -2959,11 +3138,43 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6672,
-        -320
+        5360,
+        -368
       ],
       "id": "626caa5c-9f08-480b-abf8-1a276906ce68",
       "name": "Respond Created (CRM Pending)"
+    },
+    {
+      "parameters": {
+        "options": {
+          "fileName": "={{ $('Build Context').first().json.order_id }}.csv"
+        }
+      },
+      "id": "2e9b5bbd-4c0b-4406-b870-35c23a165670",
+      "name": "Create CSV Data File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        6832,
+        -640
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  order_id: $('Prepare Post Payment Context').first().json.order_id,\n  salesorder_id: $('Prepare Post Payment Context').first().json.vtiger_so_id,\n  salesorder_no: $('Prepare Post Payment Context').first().json.vtiger_so_number,\n  customerReferenceNumber: $('Prepare Post Payment Context').first().json.customer_reference_number,\n  status: 'in process',\n  payment_status: 'paid',\n  crm_status: 'paid',\n  warning: 'Order accepted and payment collected; confirmation details are being finalized.',\n  requestId: $('Request ID').first().json.requestId\n} }}",
+        "options": {
+          "responseCode": 201
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        8032,
+        -448
+      ],
+      "id": "d168e178-7c28-4df1-a3f2-64d36120d4b6",
+      "name": "Response Created (Fallback)"
     }
   ],
   "connections": {
@@ -3087,18 +3298,7 @@
       "main": [
         [
           {
-            "node": "Students CSV",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Students CSV": {
-      "main": [
-        [
-          {
-            "node": "Build Uploads",
+            "node": "Create CSV Data File",
             "type": "main",
             "index": 0
           }
@@ -3110,6 +3310,13 @@
         [
           {
             "node": "Record Completed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response Created (Fallback)",
             "type": "main",
             "index": 0
           }
@@ -3708,6 +3915,17 @@
           }
         ]
       ]
+    },
+    "Create CSV Data File": {
+      "main": [
+        [
+          {
+            "node": "Build Uploads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -3730,7 +3948,8 @@
         "a5a713a3-6a34-4cec-a148-9131f71a480b",
         "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
         "27b090cb-3872-44f6-9a32-64f12bc579c2",
-        "8d9abb9b-2765-45b6-9876-7bfa9aa42547"
+        "8d9abb9b-2765-45b6-9876-7bfa9aa42547",
+        "d168e178-7c28-4df1-a3f2-64d36120d4b6"
       ]
     },
     {
@@ -3770,9 +3989,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "15117969-abaa-4d08-8b69-479d14aebda5",
+  "versionId": "be4efcc3-0672-49af-8421-631a9e50cc52",
   "activeVersionId": "27e7c2d7-8a3b-4c92-8396-53507340a20d",
-  "versionCounter": 1154,
+  "versionCounter": 1179,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
