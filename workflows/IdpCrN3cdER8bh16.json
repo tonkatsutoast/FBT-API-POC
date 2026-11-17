@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-16T22:01:08.233Z",
+  "updatedAt": "2026-11-17T20:08:53.687Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -132,8 +132,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        784,
-        -1008
+        752,
+        -1056
       ],
       "executeOnce": true,
       "credentials": {
@@ -152,8 +152,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1456,
-        -1008
+        1424,
+        -1056
       ],
       "onError": "continueErrorOutput"
     },
@@ -193,8 +193,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2096,
-        -1056
+        2064,
+        -1104
       ],
       "credentials": {
         "httpBasicAuth": {
@@ -243,8 +243,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2304,
-        -1120
+        2272,
+        -1168
       ]
     },
     {
@@ -262,7 +262,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  salesorder_id: $('Create SalesOrder').first().json.body?.result?.id ?? null,\n  salesorder_no: $('Create SalesOrder').first().json.body?.result?.salesorder_no ?? null,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  salesorder_id: $('Prepare Post Payment Context').first().json.vtiger_so_id ?? null,\n  salesorder_no: $('Prepare Post Payment Context').first().json.vtiger_so_number ?? null,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
       },
       "id": "b0b76abf-8361-4ffc-aafb-3433a28034bc",
       "name": "Build Confirmation",
@@ -350,7 +350,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Build Context').item.json.vtiger_base_url }}/revise",
+        "url": "={{ $json.vtiger_base_url }}/revise",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBasicAuth",
         "sendBody": true,
@@ -363,14 +363,17 @@
             },
             {
               "name": "element",
-              "value": "={{ JSON.stringify({ id: $('Create SalesOrder').item.json.body.result.id, sostatus: \"Created\", cf_1311: \"Payment Received in Full\", cf_1283: new Date().toISOString().slice(0, 10), cf_1315: `payment collected via card on file (Stripe) - ${$json.body.id}` }) }}"
+              "value": "={{ JSON.stringify({\n  id: $json.vtiger_so_id,\n  cf_1311: \"Payment Received in Full\",\n  cf_1283: new Date().toISOString().slice(0, 10),\n  cf_1315: `payment collected via card on file (Stripe) - ${$json.stripe_pi_id}`,\n  cf_salesorder_usecustomershippingaccount: \"Yes\"\n}) }}"
             }
           ]
         },
         "options": {
           "response": {
-            "response": {}
-          }
+            "response": {
+              "fullResponse": true
+            }
+          },
+          "timeout": 15000
         }
       },
       "id": "8197fa72-d286-4d09-87ef-ba257f65a0f6",
@@ -383,6 +386,7 @@
       ],
       "retryOnFail": true,
       "waitBetweenTries": 2000,
+      "alwaysOutputData": false,
       "credentials": {
         "httpBasicAuth": {
           "id": "jLqvj3hkJtbYAjcd",
@@ -394,7 +398,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { error: { code: 'PAYMENT_FAILED', message: 'Payment failed.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [{ decline_code: $json.body?.error?.decline_code ?? null, raw: $json.body?.error?.message ?? 'Payment failed' }] } } }}",
+        "responseBody": "={{ { error: { code: $json.payment_error_code ?? 'PAYMENT_FAILED', message: $json.payment_error_message ?? 'Payment failed.', retryable: false, requestId: $('Validate Input').first().json.requestId, details: [{ decline_code: $json.decline_code ?? null}] } } }}",
         "options": {
           "responseCode": 402
         }
@@ -417,8 +421,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
-        -1008
+        976,
+        -1056
       ]
     },
     {
@@ -452,8 +456,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1232,
-        -1008
+        1200,
+        -1056
       ]
     },
     {
@@ -469,13 +473,13 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1584,
-        -720
+        1552,
+        -768
       ]
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Context').first().json;\n\n// The VTiger order number returned on creation, e.g. \"1234\" -> \"1234.png\"/\"1234.csv\".\n// If the CRM step was skipped (dry run with no CRM/Stripe), fall back to the\n// internal order id so the upload path stays testable.\nlet so = {};\ntry {\n  so = $('Create SalesOrder').first().json.body?.result ?? {};\n} catch (e) { /* Create SalesOrder did not run */ }\nconst orderNo = so.salesorder_no ?? so.id ?? ctx.order_id;\n\nconst hasStudents = $('Students').first().json.has_students === true;\nconst hasArtwork  = ctx.art_work_provided === true;\n\nconst items = [];\n\n// Students CSV -> \"<vtiger order number>.csv\"\nif (hasStudents) {\n  const csv = $input.first()?.binary?.data;\n  if (csv) {\n    items.push({ json: { upload_file_name: `${orderNo}.csv` }, binary: { data: csv } });\n  }\n}\n\n// artWork -> \"<vtiger order number>.<ext>\"  (reads the original upload; the\n// binary does not survive Process Order, so it is taken from the Webhook node)\nif (hasArtwork) {\n  const art = $('Webhook').first().binary?.artWork;\n  if (art) {\n    items.push({ json: { upload_file_name: `${orderNo}.${ctx.art_work_extension}` }, binary: { data: art } });\n  }\n}\n\n// Nothing to upload -> emit a single marker so the branch continues to the\n// confirmation instead of dead-ending.\nif (!items.length) {\n  return [{ json: { has_upload: false, order_number: orderNo } }];\n}\nreturn items.map(i => ({ json: { ...i.json, has_upload: true, order_number: orderNo }, binary: i.binary }));"
+        "jsCode": "const ctx = $('Build Context').first().json;\n\n// The VTiger order number returned on creation, e.g. \"1234\" -> \"1234.png\"/\"1234.csv\".\n// If the CRM step was skipped (dry run with no CRM/Stripe), fall back to the\n// internal order id so the upload path stays testable.\n\nlet ppc = {};\ntry { ppc = $('Prepare Post Payment Context').first().json; } catch {}\n\nconst orderNo = ppc.vtiger_so_number ?? ctx.order_id;\n\nconst hasStudents = $('Students').first().json.has_students === true;\nconst hasArtwork  = ctx.art_work_provided === true;\n\nconst items = [];\n\n// Students CSV -> \"<vtiger order number>.csv\"\nif (hasStudents) {\n  const csv = $input.first()?.binary?.data;\n  if (csv) {\n    items.push({ json: { upload_file_name: `${orderNo}.csv` }, binary: { data: csv } });\n  }\n}\n\n// artWork -> \"<vtiger order number>.<ext>\"  (reads the original upload; the\n// binary does not survive Process Order, so it is taken from the Webhook node)\nif (hasArtwork) {\n  const art = $('Webhook').first().binary?.artWork;\n  if (art) {\n    items.push({ json: { upload_file_name: `${orderNo}.${ctx.art_work_extension}` }, binary: { data: art } });\n  }\n}\n\n// Nothing to upload -> emit a single marker so the branch continues to the\n// confirmation instead of dead-ending.\nif (!items.length) {\n  return [{ json: { has_upload: false, order_number: orderNo } }];\n}\nreturn items.map(i => ({ json: { ...i.json, has_upload: true, order_number: orderNo }, binary: i.binary }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -739,7 +743,11 @@
             "reference_url": "={{ $('Build Context').item.json.reference_url }}",
             "status": "PROCESSING",
             "amount_cents": "={{ String($('Compute Tax').first().json.total_with_tax_cents) }}",
-            "heartbeat_at": "=heartbeat_at = {{ $now.toISO() }}"
+            "heartbeat_at": "={{ $now.toISO() }}",
+            "execution_id": "={{ $execution.id }}",
+            "payment_attempt": 1,
+            "attempts": 0,
+            "last_error_code": "={{ '' }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1045,9 +1053,11 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2848,
-        -1168
-      ]
+        2816,
+        -1216
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -1069,14 +1079,115 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "status": "={{ $json.statusCode ? 'FAILED_CRM' : 'CRM_UNKNOWN' }}",
-            "error_message": "={{ $json.statusMessage ?? $json.error?.message ?? 'unknown CRM error' }}"
+            "status": "={{ $json.statusCode && $json.statusCode < 500 ? 'FAILED_CRM' : 'CRM_UNKNOWN' }}",
+            "error_message": "={{ $json.body?.error?.message ?? $json.error?.message ?? 'unknown CRM error' }}",
+            "last_error_code": "={{ $json.body?.error?.code ?? $json.error?.code ?? 'CRM_ERROR' }}"
           },
           "matchingColumns": [],
           "schema": [
             {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
               "id": "status",
               "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -1093,6 +1204,106 @@
               "type": "string",
               "readOnly": false,
               "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -1105,9 +1316,10 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2816,
-        -672
-      ]
+        2784,
+        -720
+      ],
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -1383,7 +1595,7 @@
             "entries": [
               {
                 "name": "Retry-After",
-                "value": "30"
+                "value": "3000"
               }
             ]
           }
@@ -1392,8 +1604,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3040,
-        -960
+        3008,
+        -1008
       ],
       "id": "2fe1420d-f17f-4194-a443-f64667104a01",
       "name": "Respond CRM Unavailable"
@@ -1410,7 +1622,7 @@
           "conditions": [
             {
               "id": "af315bee-37bf-4c71-8a20-febe856addef",
-              "leftValue": "={{ $json.statusCode === 429 }}",
+              "leftValue": "={{ $json.statusCode === 429 || $json.statusCode === 503 }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -1426,8 +1638,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2528,
-        -1024
+        2496,
+        -1072
       ],
       "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
       "name": "Is CRM Error Retryable?"
@@ -1456,8 +1668,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2832,
-        -960
+        2800,
+        -1008
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
       "name": "Delete Claim",
@@ -1476,8 +1688,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3008,
-        -672
+        3264,
+        -560
       ]
     },
     {
@@ -1662,8 +1874,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1408,
-        -720
+        1376,
+        -768
       ],
       "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
       "name": "Delete Claim (Lookup)",
@@ -1710,8 +1922,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1840,
-        -688
+        1808,
+        -736
       ],
       "id": "20913296-2538-4038-a760-5c1068177ab5",
       "name": "Delete Claim (Build)",
@@ -1728,8 +1940,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2048,
-        -688
+        2016,
+        -736
       ],
       "id": "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
       "name": "Respond Build Error"
@@ -1796,7 +2008,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.idem_key);\nif (rows.length === 0) {\n  return [{ json: { route: 'new' } }];\n}\n\nrows.sort((a, b) => Number(a.id) - Number(b.id));\nconst row = rows[0];\nconst status = String(row.status ?? '');\n\nconst out = (route) => [{ json: { route, row } }];\n\nif (status === 'COMPLETED') return out('replay');\nif (status === 'PAID') return out('resume_post_payment');\nif (status === 'PAYMENT_FAILED') return out('resume_payment');\nif (status === 'PAYMENT_PENDING' || status === 'PAYMENT_UNKNOWN') return out('pending');\nif (status === 'SO_CREATED') return out('resume_payment');\nif (status === 'FAILED_CRM') return out('retry_crm');\nif (status === 'CRM_UNKNOWN') return out('pending_reconciliation');\nif (status === 'AMOUNT_MISMATCH') return out('terminal');\n\nif (status === 'PROCESSING') {\n  const ts = Date.parse(row.updatedAt ?? row.createdAt ?? 0);\n  const ageMs = Number.isFinite(ts) ? Date.now() - ts : Infinity;\n  return out(ageMs < 2 * 60 * 1000 ? 'in_progress' : 'stale');\n}\n\nreturn out('unknown');"
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.idem_key);\nif (rows.length === 0) {\n  return [{ json: { route: 'new' } }];\n}\n\nrows.sort((a, b) => Number(a.id) - Number(b.id));\nconst row = rows[0];\nconst status = String(row.status ?? '');\n\nconst out = (route) => [{ json: { route, ...row } }];\n\nif (status === 'COMPLETED') return out('replay');\nif (status === 'PAID') return out('resume_post_payment');\nif (status === 'PAYMENT_FAILED') return out('resume_payment');\nif (status === 'PAYMENT_PENDING' || status === 'PAYMENT_UNKNOWN') return out('pending');\nif (status === 'SO_CREATED') return out('resume_payment');\nif (status === 'FAILED_CRM') return out('retry_crm');\nif (status === 'CRM_UNKNOWN') return out('pending_reconciliation');\nif (status === 'AMOUNT_MISMATCH') return out('terminal');\n\nif (status === 'PROCESSING') {\n  const raw = row.heartbeat_at || row.updatedAt || row.createdAt;\n  const ts = raw instanceof Date ? raw.getTime() : Date.parse(raw);\n  const ageMs = Number.isFinite(ts) ? Date.now() - ts : Infinity;\n  const STALE_MS = 10 * 60 * 1000; // 10 minutes\n  return out(ageMs < STALE_MS ? 'in_progress' : 'stale');\n}\nreturn out('unknown');"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1947,7 +2159,7 @@
                   {
                     "id": "bf0c16d8-a71c-44b0-a960-e85b3b9fc029",
                     "leftValue": "={{ $json.route }}",
-                    "rightValue": "in_progess",
+                    "rightValue": "in_progress",
                     "operator": {
                       "type": "string",
                       "operation": "equals",
@@ -2096,8 +2308,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3888,
-        -576
+        3440,
+        -1232
       ],
       "id": "8f97a045-e2a7-4568-a4ab-fe536137f279",
       "name": "Prepare Payment Input"
@@ -2290,7 +2502,7 @@
                 "conditions": [
                   {
                     "id": "8c4fb15e-e398-410d-951a-bcc7c8004140",
-                    "leftValue": "",
+                    "leftValue": "={{ $json.outcome }}",
                     "rightValue": "action_required",
                     "operator": {
                       "type": "string",
@@ -2378,6 +2590,31 @@
               },
               "renameOutput": true,
               "outputKey": "error"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "418dee96-32da-48c4-ba9a-6e49a8553d77",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "unmatched",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "unmatched"
             }
           ]
         },
@@ -2408,7 +2645,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ {\n  status: 'payment_pending',\n  order_id: $json.order_id ?? null,\n  salesorder_no: $json.salesorder_no ?? null,\n  payment_status: 'pending',\n  payment_intent_id: $json.stripe_pi_id ?? null,\n  requestId: $('Request ID').first().json.requestId,\n  retry_after: 5\n} }}",
+        "responseBody": "={{ {\n  status: 'payment_pending',\n  order_id: $json.order_id ?? null,\n  salesorder_no: $json.salesorder_no ?? $json.vtiger_so_number ?? null,\n  payment_status: 'pending',\n  payment_intent_id: $json.stripe_pi_id ?? null,\n  requestId: $('Request ID').first().json.requestId,\n  retry_after: 5\n} }}",
         "options": {
           "responseCode": 202
         }
@@ -2433,8 +2670,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        96,
-        -32
+        112,
+        -16
       ],
       "id": "ce727bfe-1032-4554-9085-12223d14dda4",
       "name": "Respond CRM Unknown"
@@ -2467,8 +2704,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4864,
-        -208
+        4848,
+        -224
       ],
       "id": "f013570c-d304-4633-92fa-793782105c7e",
       "name": "Respond Payment Unknown"
@@ -2476,7 +2713,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"error\": {\n    \"code\": \"LEDGER_STATE_UNKNOWN\",\n    \"message\": \"The order is in an unrecognized state and cannot be processed automatically. Contact support with this reference.\",\n    \"retryable\": false,\n    \"requestId\": \"req_...\",\n    \"details\": [\n      {\n        \"idem_key\": \"BUSR-380668|PO-12345\",\n        \"ledger_status\": \"PAYMENT_PENDNG\",\n        \"order_id\": \"TS-...\"\n      }\n    ]\n  }\n}",
+        "responseBody": "={{ (() => {\n  const here = $json ?? {};\n  const row = here.row ?? here;\n  return {\n    error: {\n      code: 'LEDGER_STATE_UNKNOWN',\n      message: 'The order is in an unrecognized state and cannot be processed automatically. Contact support with this reference.',\n      retryable: false,\n      requestId: $('Request ID').first().json.requestId,\n      details: [{\n        idem_key: row.idem_key ?? null,\n        ledger_status: row.status ?? null,\n        order_id: row.order_id ?? null,\n        customer_reference_number: row.customer_reference_number ?? null\n      }]\n    }\n  };\n})() }}",
         "options": {
           "responseCode": 500
         }
@@ -2520,8 +2757,6 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "idem_key": "=",
-            "execution_id": "=",
             "heartbeat_at": "={{ $now.toISO() }}"
           },
           "matchingColumns": [],
@@ -2534,7 +2769,7 @@
               "display": true,
               "type": "string",
               "readOnly": false,
-              "removed": false
+              "removed": true
             },
             {
               "id": "customer_reference_number",
@@ -2755,8 +2990,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1664,
-        -1024
+        1632,
+        -1072
       ],
       "id": "33321bb3-037e-4278-80cd-52ecb741cbdb",
       "name": "Heartbeat / Assert Claim",
@@ -2790,8 +3025,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1856,
-        -1024
+        1824,
+        -1072
       ],
       "id": "78bb8af6-011e-4c14-8d0c-57004a9e7c72",
       "name": "Heartbeat OK?"
@@ -2807,8 +3042,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2112,
-        -880
+        2080,
+        -928
       ],
       "id": "3698f2a2-3a04-4a33-a414-e7ab34256329",
       "name": "Respond In Progress Heartbeat"
@@ -2824,8 +3059,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4880,
-        32
+        4848,
+        -16
       ],
       "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
       "name": "Respond Payment Error"
@@ -3175,6 +3410,91 @@
       ],
       "id": "d168e178-7c28-4df1-a3f2-64d36120d4b6",
       "name": "Response Created (Fallback)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9ffca84d-3a8e-4914-a4a6-a0b84ae8fa43",
+              "leftValue": "={{ $json.status === 'CRM_UNKNOWN' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2976,
+        -720
+      ],
+      "id": "d71bd094-60d3-4c13-b9e5-63d898d2174b",
+      "name": "CRM Unknown?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e7578e6a-0ea3-4964-b57f-9142b591c4ee",
+              "leftValue": "={{ $json.status === 'SO_CREATED' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3088,
+        -1232
+      ],
+      "id": "c6da4cfa-f381-41ab-ab72-9bc99481e616",
+      "name": "If SO Created"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  error: {\n    code: 'SO_RECORD_FAILED',\n    message: 'The SalesOrder was created but could not be recorded in the order ledger. Do not resubmit; contact support with this reference.',\n    retryable: false,\n    requestId: $('Request ID').first().json.requestId,\n    details: [{\n      order_id: $('Build Context').first().json.order_id,\n      customer_reference_number: $('Build Context').first().json.customer_reference_number,\n      idem_key: $('Build Context').first().json.idem_key,\n      salesorder_no: $('Create SalesOrder').first().json.body?.result?.salesorder_no ?? null\n    }]\n  }\n} }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3440,
+        -1040
+      ],
+      "id": "3dc2c80b-5491-4181-8942-2c206cf5dc67",
+      "name": "Respond SO Record Failed"
     }
   ],
   "connections": {
@@ -3494,7 +3814,14 @@
       "main": [
         [
           {
-            "node": "Prepare Payment Input",
+            "node": "If SO Created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond SO Record Failed",
             "type": "main",
             "index": 0
           }
@@ -3505,7 +3832,7 @@
       "main": [
         [
           {
-            "node": "Respond CRM Rejected",
+            "node": "CRM Unknown?",
             "type": "main",
             "index": 0
           }
@@ -3840,6 +4167,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Respond Payment Error",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -3937,6 +4271,47 @@
           }
         ]
       ]
+    },
+    "Respond CRM Rejected": {
+      "main": [
+        []
+      ]
+    },
+    "CRM Unknown?": {
+      "main": [
+        [
+          {
+            "node": "Respond CRM Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond CRM Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If SO Created": {
+      "main": [
+        [
+          {
+            "node": "Prepare Payment Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond SO Record Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -3972,37 +4347,12 @@
         "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11",
         "3d45f218-89ef-4083-bfc4-ac6eadd0ae32"
       ]
-    },
-    {
-      "id": "02f4d33f-9768-42cd-b7ea-efc7468e05ae",
-      "name": "Create Vtiger Sales Order",
-      "nodeIds": [
-        "071b8519-d437-4c31-9798-6f1c18632f42",
-        "0a77a808-5ab9-4c47-b1c9-7be357573ea0",
-        "1f8d7fcc-598c-432d-8359-8693eb01ca2a",
-        "f0c12b63-ff42-449d-92f8-e59ff6f99007",
-        "8b93ef0c-e1b5-456d-915f-d56157fa90ad",
-        "9415cbde-46f2-421c-a503-952fc08c7cba",
-        "4f42a8c4-6d8a-4c51-889a-9e576a2e1859",
-        "cd704ff0-2aef-4cd3-911b-d3fb3b6b29db",
-        "5a507ef1-9660-4b7f-bdb9-0b180be8b88f",
-        "2fe1420d-f17f-4194-a443-f64667104a01",
-        "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
-        "835d6c41-c465-4e60-9530-7f97692198b0",
-        "1c6e285f-6196-4487-ab20-c3cf4fec4d0e",
-        "7fec76aa-271c-4e63-bdc9-5868677a9082",
-        "20913296-2538-4038-a760-5c1068177ab5",
-        "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
-        "33321bb3-037e-4278-80cd-52ecb741cbdb",
-        "78bb8af6-011e-4c14-8d0c-57004a9e7c72",
-        "3698f2a2-3a04-4a33-a414-e7ab34256329"
-      ]
     }
   ],
   "pinData": {},
-  "versionId": "2a318999-8322-4fc1-97fb-74c4d8af3e6e",
-  "activeVersionId": "27e7c2d7-8a3b-4c92-8396-53507340a20d",
-  "versionCounter": 1181,
+  "versionId": "fa2b70d5-3ce0-4417-9826-aea95320fbf3",
+  "activeVersionId": "fa2b70d5-3ce0-4417-9826-aea95320fbf3",
+  "versionCounter": 1314,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -4027,7 +4377,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version fa2b70d5",
+    "description": ""
   }
 }

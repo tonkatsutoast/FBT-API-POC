@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-13T18:46:53.329Z",
+  "updatedAt": "2026-11-17T20:14:54.516Z",
   "createdAt": "2026-11-11T19:05:04.348Z",
   "id": "55ty9WMD5eBWXnoB",
   "name": "order.pay",
@@ -427,7 +427,8 @@
             "stripe_pi_id": "={{ $json.stripe_pi_id }}",
             "paid_at": "={{ $now.toISO() }}",
             "payment_error_code": "={{''}}",
-            "payment_error_message": "={{''}}"
+            "payment_error_message": "={{''}}",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -919,7 +920,8 @@
             "payment_error_code": "={{ $json.payment_error_code }}",
             "payment_error_message": "={{ $json.payment_error_message }}",
             "stripe_pi_id": "={{ $json.stripe_pi_id }}",
-            "last_error_code": "={{ $json.payment_error_code }}"
+            "last_error_code": "={{ $json.payment_error_code }}",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1163,7 +1165,8 @@
           "value": {
             "status": "PAYMENT_PENDING",
             "stripe_pi_id": "={{ $json.stripe_pi_id }}",
-            "last_error_code": "={{ '' }}"
+            "last_error_code": "={{ '' }}",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1409,7 +1412,8 @@
             "payment_error_code": "AUTHENTICATION_REQUIRED",
             "payment_error_message": "This card requires authentication and the customer is not present.",
             "stripe_pi_id": "={{ $json.stripe_pi_id }}",
-            "last_error_code": "AUTHENTICATION_REQUIRED"
+            "last_error_code": "AUTHENTICATION_REQUIRED",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1655,7 +1659,8 @@
             "payment_error_code": "={{ $json.payment_error_code }}",
             "payment_error_message": "={{ $json.payment_error_message }}",
             "stripe_pi_id": "={{ $json.stripe_pi_id }}",
-            "last_error_code": "={{ $json.payment_error_code }}"
+            "last_error_code": "={{ $json.payment_error_code }}",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -1901,7 +1906,8 @@
             "payment_error_message": "Internal payment error.",
             "last_error_code": "INTERNAL_ERROR",
             "stripe_pi_id": "={{ $json.stripe_pi_id }}",
-            "payment_error_code": "={{ $('Classify Payment').first().json.payment_error_code }}"
+            "payment_error_code": "={{ $('Classify Payment').first().json.payment_error_code }}",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -2160,6 +2166,12 @@
               "name": "decline_code",
               "value": "={{ null }}",
               "type": "string"
+            },
+            {
+              "id": "0e9ce30d-d85d-4ffd-8058-e5f48e01fdba",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
+              "type": "string"
             }
           ]
         },
@@ -2200,7 +2212,8 @@
             "payment_error_message": "Payment provider did not respond.",
             "last_error_code": "PAYMENT_TRANSPORT_ERROR",
             "payment_error_code": "PAYMENT_TRANSPORT_ERROR",
-            "stripe_pi_id": "={{ '' }}"
+            "stripe_pi_id": "={{ '' }}",
+            "payment_attempt": "={{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -2459,6 +2472,12 @@
               "name": "decline_code",
               "value": "={{ null }}",
               "type": "string"
+            },
+            {
+              "id": "ee2f5be2-e1d8-4655-84c3-fe6b1b45b4d3",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
+              "type": "string"
             }
           ]
         },
@@ -2511,6 +2530,12 @@
               "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
               "name": "decline_code",
               "value": "={{ $('Classify Payment').first().json.decline_code }}",
+              "type": "string"
+            },
+            {
+              "id": "20340cb1-5002-4f0c-a786-851033caad78",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
               "type": "string"
             }
           ]
@@ -2565,6 +2590,12 @@
               "name": "decline_code",
               "value": "={{ null }}",
               "type": "string"
+            },
+            {
+              "id": "1b79c952-40a4-4e9e-a710-488d157314f4",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
+              "type": "string"
             }
           ]
         },
@@ -2617,6 +2648,12 @@
               "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
               "name": "decline_code",
               "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "8fab6bf7-b737-439b-addb-d7a295a753b6",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
               "type": "string"
             }
           ]
@@ -2671,6 +2708,12 @@
               "name": "decline_code",
               "value": "={{ null }}",
               "type": "string"
+            },
+            {
+              "id": "446c84b0-37b9-41ee-94cc-37eb5d98529d",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
+              "type": "string"
             }
           ]
         },
@@ -2724,6 +2767,12 @@
               "name": "decline_code",
               "value": "={{ null }}",
               "type": "string"
+            },
+            {
+              "id": "4f35e92c-eb1c-41b8-b89b-de1b9876b3af",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
+              "type": "string"
             }
           ]
         },
@@ -2776,6 +2825,12 @@
               "id": "bb9c178e-68a7-42b6-9ad9-f9541227ff71",
               "name": "decline_code",
               "value": "={{ null }}",
+              "type": "string"
+            },
+            {
+              "id": "c2e1f7b3-7987-4434-9114-4d2e07921ceb",
+              "name": "order_id",
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}",
               "type": "string"
             }
           ]
@@ -3005,9 +3060,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "f7bd6142-34a6-41cf-9e09-06a55823cd6d",
-  "activeVersionId": "5ee94550-6780-497a-8de5-323cf1dd1cd2",
-  "versionCounter": 401,
+  "versionId": "4cadee93-404e-455c-aefc-5dd936a3ff7a",
+  "activeVersionId": "4cadee93-404e-455c-aefc-5dd936a3ff7a",
+  "versionCounter": 435,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
@@ -3032,7 +3087,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version 4cadee93",
+    "description": ""
   }
 }
