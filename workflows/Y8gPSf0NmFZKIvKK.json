@@ -1,0 +1,2159 @@
+{
+  "updatedAt": "2026-11-17T23:56:22.988Z",
+  "createdAt": "2026-11-17T23:11:13.620Z",
+  "id": "Y8gPSf0NmFZKIvKK",
+  "name": "order.stale_reclaim",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "idem_key"
+            },
+            {
+              "name": "claim_execution_id"
+            },
+            {
+              "name": "request_id"
+            },
+            {
+              "name": "vtiger_base_url"
+            },
+            {
+              "name": "vtiger_account_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6cd4ab04-8a28-4513-92a8-5e1995e42d60",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9e9e3eaa-163e-4030-9764-6b74ffd56535",
+              "leftValue": "={{ !!$json.idem_key && String($json.execution_id) === String($('When Executed by Another Workflow').first().json.claim_execution_id) }}\n",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "104f9a1d-ba2d-43dd-8c8e-6b066dd1e3df",
+      "name": "Assert Owner?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3997c4aa-ff30-4b8e-8686-a61a2de8f6b8",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        928,
+        32
+      ],
+      "id": "bb1cb2bc-f0a2-4456-ab9d-69ff784b00ba",
+      "name": "Has PI?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9fe63cbe-6c09-4bc5-8792-4c00c2442fcd",
+              "leftValue": "={{ Number($json.attempts ?? 0) > 3 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        656,
+        -96
+      ],
+      "id": "4f329778-f45d-44af-b1da-0af00a984e51",
+      "name": "Too Many Attempts?"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.claim_execution_id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "694cc046-4fba-4c67-b0c7-f9443e082edd",
+      "name": "Get Ledger Row (Assert Owner)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Get Ledger Row (Assert Owner)').first().json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.claim_execution_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "PAYMENT_UNKNOWN",
+            "last_error_code": "STALE_PI_RECONCILE",
+            "heartbeat_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1152,
+        -96
+      ],
+      "id": "7d33f137-060f-43da-9fb9-7adadc098113",
+      "name": "Record Stale Payment Unknown"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6271e770-ff5d-472e-bc42-68907968f6fd",
+              "leftValue": "={{ !!$json.vtiger_so_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1136,
+        160
+      ],
+      "id": "e7dfcb34-1085-43ca-8075-23185721311b",
+      "name": "Has SO?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Get Ledger Row (Assert Owner)').first().json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.claim_execution_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "SO_CREATED",
+            "heartbeat_at": "={{ $now.toISO() }}",
+            "last_error_code": "={{ '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        96
+      ],
+      "id": "f719ee25-f9d0-4b37-9636-da3b7590cb14",
+      "name": "Record SO Found (Local)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Get Ledger Row (Assert Owner)').first().json;\nconst t = $('When Executed by Another Workflow').first().json;\n\nconst ref = String(row.customer_reference_number ?? '').replace(/'/g, \"''\");\nconst account = String(t.vtiger_account_id ?? '').replace(/'/g, \"''\");\n\nif (!ref || !account) {\n  return [{ json: {\n    query: null,\n    error: 'Missing customer_reference_number or vtiger_account_id'\n  } }];\n}\n\nreturn [{\n  json: {\n    query: `SELECT id, salesorder_no, sostatus FROM SalesOrder WHERE vtiger_purchaseorder = '${ref}' AND account_id = '${account}';`\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        288
+      ],
+      "id": "dbd058b2-f179-40b0-9544-52440b2fb938",
+      "name": "Build SO Query"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fafb4dc5-10e9-4698-8f1a-ebf3629f76c2",
+              "leftValue": "={{ !!$json.query }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1584,
+        288
+      ],
+      "id": "555dc7b3-b380-4b3d-b9a0-445f74b48a9c",
+      "name": "Query Built?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('When Executed by Another Workflow').first().json.vtiger_base_url }}/query\n",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1808,
+        192
+      ],
+      "id": "e7ff9a97-9dab-4d53-81e2-478d9f43e4ff",
+      "name": "Lookup VTiger SO",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json ?? {};\n\nlet payload = raw.body !== undefined ? raw.body : raw.data;\nif (typeof payload === 'string') {\n  try {\n    payload = payload.trim() ? JSON.parse(payload) : null;\n  } catch {\n    payload = null;\n  }\n}\n\nconst fail = (message) => [{\n  json: {\n    ok: false,\n    found: 'error',\n    count: 0,\n    so_id: null,\n    so_no: null,\n    so_ids: [],\n    error: message\n  }\n}];\n\nif (raw.error) {\n  return fail(`VTiger query error: ${raw.error.message ?? raw.error}`);\n}\nif (raw.statusCode !== undefined && raw.statusCode !== 200) {\n  return fail(`VTiger query failed with HTTP ${raw.statusCode}`);\n}\nif (!payload || payload.success !== true) {\n  return fail(`VTiger query rejected: ${JSON.stringify(payload?.error ?? payload)}`);\n}\nif (!Array.isArray(payload.result)) {\n  return fail('VTiger query returned no result array');\n}\n\nconst rows = payload.result;\nconst count = rows.length;\n\nreturn [{\n  json: {\n    ok: true,\n    count,\n    found: count === 0 ? 'none' : count === 1 ? 'one' : 'many',\n    so_id: rows[0]?.id ?? null,\n    so_no: rows[0]?.salesorder_no ?? null,\n    so_ids: rows.map(r => r.id).filter(Boolean)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2112,
+        192
+      ],
+      "id": "4d1ec63d-62d2-49fe-8186-63c6dfcda165",
+      "name": "Parse VTiger SO Lookup"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.found }}",
+                    "rightValue": "one",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f387d595-fdb4-4693-b948-76482ee52833"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "one"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "343aa574-5820-48b5-ae5b-732941e122df",
+                    "leftValue": "={{ $json.found }}",
+                    "rightValue": "none",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "none"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "fb293ab1-89b4-40a9-be99-398653bc4430",
+                    "leftValue": "={{ $json.found }}",
+                    "rightValue": "many",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "many"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ec9d3471-0991-49f6-9696-449279e234f5",
+                    "leftValue": "={{ $json.found }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "error"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 3
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2336,
+        160
+      ],
+      "id": "102ba2c5-dbdf-43cb-ab29-9d75b9794b08",
+      "name": "VTiger SO Result"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Get Ledger Row (Assert Owner)').first().json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.claim_execution_id }}\n"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "SO_CREATED",
+            "vtiger_so_id": "={{ $json.so_id }}",
+            "vtiger_so_number": "={{ $json.so_no }}",
+            "heartbeat_at": "={{ $now.toISO() }}",
+            "last_error_code": "={{ '' }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2560,
+        -96
+      ],
+      "id": "fce49000-0b33-4a64-9819-e6c21792da09",
+      "name": "Record SO Found (Lookup)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Get Ledger Row (Assert Owner)').first().json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.claim_execution_id }}\n"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "CRM_UNKNOWN",
+            "vtiger_so_id": "=",
+            "vtiger_so_number": "=",
+            "heartbeat_at": "={{ $now.toISO() }}",
+            "last_error_code": "DUPLICATE SO"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2576,
+        256
+      ],
+      "id": "7bf72197-048d-46f5-a741-fde869c6af1a",
+      "name": "Record Duplicate SO",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $('Get Ledger Row (Assert Owner)').first().json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $('When Executed by Another Workflow').first().json.claim_execution_id }}\n"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "CRM_UNKNOWN",
+            "vtiger_so_id": "=",
+            "vtiger_so_number": "=",
+            "heartbeat_at": "={{ $now.toISO() }}",
+            "last_error_code": "STALE_LOOKUP_FAILED"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2576,
+        416
+      ],
+      "id": "fd3124c5-d552-46e2-85b2-f5c8ad439125",
+      "name": "Record Lookup Unknown",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Get Ledger Row (Assert Owner)').first().json ?? {};\nreturn [{ json: { outcome: 'claim_lost', ...row } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        96
+      ],
+      "id": "12d33de6-357f-48f9-b6f7-ebdba6f9517a",
+      "name": "Return Claim Lost"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Get Ledger Row (Assert Owner)').first().json ?? {};\nreturn [{ json: { outcome: 'over_attempts', ...row } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        -256
+      ],
+      "id": "f36af17f-f1e0-4bc7-9a82-5a88748fedd9",
+      "name": "Return Too Many Attempts"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Record Stale Payment Unknown').first().json\n  ?? $('Get Ledger Row (Assert Owner)').first().json\n  ?? {};\nreturn [{ json: { outcome: 'payment_unknown', ...row } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        -96
+      ],
+      "id": "4ffbf644-21f6-4fc6-8205-428885ed5d84",
+      "name": "Return Payment Unknown"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Record SO Found (Local)').first().json ?? {};\nreturn [{ json: { outcome: 'resume_payment', ...row } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        96
+      ],
+      "id": "805a64fb-0bcf-4f27-be40-75403a9314c6",
+      "name": "Return Resume Payment (Local)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Record SO Found (Lookup)').first().json ?? {};\nreturn [{ json: { outcome: 'resume_payment', ...row } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2784,
+        -96
+      ],
+      "id": "9f111680-b594-49f9-87ca-6c267d92ff85",
+      "name": "Return Resume Payment (Lookup)"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Get Ledger Row (Assert Owner)').first().json ?? {};\nreturn [{ json: { outcome: 'continue_new', ...row } }];;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2576,
+        96
+      ],
+      "id": "8a5c43b3-3caa-439f-a210-6c3e9537edbc",
+      "name": "Return Continue New"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Record Duplicate SO').first().json\n  ?? $('Get Ledger Row (Assert Owner)').first().json\n  ?? {};\nconst p = $('Parse VTiger SO Lookup').first().json ?? {};\nreturn [{ json: {\n  outcome: 'duplicate_so',\n  ...row,\n  count: p.count ?? 0,\n  so_ids: p.so_ids ?? []\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        256
+      ],
+      "id": "4196616e-2d33-49a7-b743-e2fc1c7e81f6",
+      "name": "Return Duplicate"
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $('Record Lookup Unknown').first().json\n  ?? $('Get Ledger Row (Assert Owner)').first().json\n  ?? {};\n\nlet p = {};\ntry { p = $('Parse VTiger SO Lookup').first().json ?? {}; } catch {}\n\nlet q = {};\ntry { q = $('Build SO Query').first().json ?? {}; } catch {}\n\nreturn [{ json: {\n  outcome: 'lookup_unknown',\n  ...row,\n  error: p.error ?? q.error ?? 'stale lookup failed'\n} }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2800,
+        416
+      ],
+      "id": "138e4efe-d169-4f84-84de-f4afc45d8ff2",
+      "name": "Return Lookup Unknown"
+    }
+  ],
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get Ledger Row (Assert Owner)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Owner?": {
+      "main": [
+        [
+          {
+            "node": "Too Many Attempts?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Claim Lost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Too Many Attempts?": {
+      "main": [
+        [
+          {
+            "node": "Return Too Many Attempts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has PI?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has PI?": {
+      "main": [
+        [
+          {
+            "node": "Record Stale Payment Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has SO?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Ledger Row (Assert Owner)": {
+      "main": [
+        [
+          {
+            "node": "Assert Owner?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has SO?": {
+      "main": [
+        [
+          {
+            "node": "Record SO Found (Local)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build SO Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build SO Query": {
+      "main": [
+        [
+          {
+            "node": "Query Built?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Built?": {
+      "main": [
+        [
+          {
+            "node": "Lookup VTiger SO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup VTiger SO": {
+      "main": [
+        [
+          {
+            "node": "Parse VTiger SO Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse VTiger SO Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse VTiger SO Lookup": {
+      "main": [
+        [
+          {
+            "node": "VTiger SO Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VTiger SO Result": {
+      "main": [
+        [
+          {
+            "node": "Record SO Found (Lookup)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Continue New",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Duplicate SO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Record Lookup Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Claim Lost": {
+      "main": [
+        []
+      ]
+    },
+    "Return Too Many Attempts": {
+      "main": [
+        []
+      ]
+    },
+    "Record Stale Payment Unknown": {
+      "main": [
+        [
+          {
+            "node": "Return Payment Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Payment Unknown": {
+      "main": [
+        []
+      ]
+    },
+    "Record SO Found (Local)": {
+      "main": [
+        [
+          {
+            "node": "Return Resume Payment (Local)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record SO Found (Lookup)": {
+      "main": [
+        [
+          {
+            "node": "Return Resume Payment (Lookup)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Duplicate SO": {
+      "main": [
+        [
+          {
+            "node": "Return Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record Lookup Unknown": {
+      "main": [
+        [
+          {
+            "node": "Return Lookup Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": null,
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "3f4b203d-b0a7-4e2e-8608-f882554e62c1",
+  "activeVersionId": "3f4b203d-b0a7-4e2e-8608-f882554e62c1",
+  "versionCounter": 220,
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-11-17T23:11:13.625Z",
+      "createdAt": "2026-11-17T23:11:13.625Z",
+      "role": "workflow:owner",
+      "workflowId": "Y8gPSf0NmFZKIvKK",
+      "projectId": "9gOu1DNGjYVeCAaR",
+      "project": {
+        "updatedAt": "2026-09-30T17:43:09.124Z",
+        "createdAt": "2026-09-30T17:41:53.765Z",
+        "id": "9gOu1DNGjYVeCAaR",
+        "name": "Daniel Shen <daniel@kitetags.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "0493bab2-90ea-40d1-b295-c05f2b6df92c"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": "Version 3f4b203d",
+    "description": ""
+  }
+}

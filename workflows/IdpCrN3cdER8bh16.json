@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T20:08:53.687Z",
+  "updatedAt": "2026-11-18T00:16:41.438Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -722,8 +722,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        96,
-        -192
+        112,
+        -240
       ]
     },
     {
@@ -2670,8 +2670,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        112,
-        -16
+        96,
+        128
       ],
       "id": "ce727bfe-1032-4554-9085-12223d14dda4",
       "name": "Respond CRM Unknown"
@@ -2688,7 +2688,7 @@
       "typeVersion": 1.5,
       "position": [
         96,
-        128
+        272
       ],
       "id": "82a64755-0882-467b-8d2e-e5cf854e7f9f",
       "name": "Respond Order Failed"
@@ -2722,7 +2722,7 @@
       "typeVersion": 1.5,
       "position": [
         96,
-        304
+        448
       ],
       "id": "c04ab302-9534-4598-bfba-6c187b1785b7",
       "name": "Respond Ledger Unknown"
@@ -3495,6 +3495,592 @@
       ],
       "id": "3dc2c80b-5491-4181-8942-2c206cf5dc67",
       "name": "Respond SO Record Failed"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $json.execution_id }}"
+            },
+            {
+              "keyName": "status",
+              "keyValue": "PROCESSING"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "execution_id": "={{ $execution.id }}",
+            "heartbeat_at": "={{ $now.toISO() }}",
+            "attempts": "={{ Number($json.attempts ?? 0) + 1 }}",
+            "last_error_code": "STALE_RECLAIMED"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_reference_number",
+              "displayName": "customer_reference_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "customer_id",
+              "displayName": "customer_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reference_url",
+              "displayName": "reference_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "order_id",
+              "displayName": "order_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_id",
+              "displayName": "vtiger_so_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "vtiger_so_number",
+              "displayName": "vtiger_so_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "stripe_pi_id",
+              "displayName": "stripe_pi_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "amount_cents",
+              "displayName": "amount_cents",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "response_json",
+              "displayName": "response_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_attempt",
+              "displayName": "payment_attempt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_code",
+              "displayName": "payment_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "payment_error_message",
+              "displayName": "payment_error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "paid_at",
+              "displayName": "paid_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "request_hash",
+              "displayName": "request_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "attempts",
+              "displayName": "attempts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "last_error_code",
+              "displayName": "last_error_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "execution_id",
+              "displayName": "execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "upload_status",
+              "displayName": "upload_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "heartbeat_at",
+              "displayName": "heartbeat_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -80
+      ],
+      "id": "4bbb7457-a9a0-4258-af64-a0bae87aa11f",
+      "name": "Reclaim Stale Claim",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9e9e3eaa-163e-4030-9764-6b74ffd56535",
+              "leftValue": "={{ !!$json.heartbeat_at }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        -80
+      ],
+      "id": "cb255a7e-2b1c-46e2-9b58-17c7f5fce279",
+      "name": "Reclaimed?"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Y8gPSf0NmFZKIvKK",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Y8gPSf0NmFZKIvKK",
+          "cachedResultName": "order.stale_reclaim"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idem_key": "={{ $('Reclaim Stale Claim').first().json.idem_key }}",
+            "claim_execution_id": "={{ $execution.id }}",
+            "request_id": "={{ $('Request ID').first().json.requestId }}",
+            "vtiger_base_url": "={{ $('Build Context').first().json.vtiger_base_url }}",
+            "vtiger_account_id": "={{ $('Build Context').first().json.vtiger_account_id }}\n"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "idem_key",
+              "displayName": "idem_key",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "claim_execution_id",
+              "displayName": "claim_execution_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "request_id",
+              "displayName": "request_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "vtiger_base_url",
+              "displayName": "vtiger_base_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "vtiger_account_id",
+              "displayName": "vtiger_account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        608,
+        -128
+      ],
+      "id": "f7142480-2a9a-4eb0-a631-505c541ba79f",
+      "name": "Call 'order.stale_reclaim'",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "resume_payment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f4bd407c-da34-4ac6-bb26-c95787490a2d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "resume_payment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0de6ebac-93db-4809-9f05-d66d4edafc2c",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "payment_unknown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "payment_unknown"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "23cf5e5f-b2e0-490e-985b-6135efdadb20",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "continue_new",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "continue_new"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "42ad48cb-a4d6-4863-acad-329b2833340e",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "duplicate_so",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "duplicate_so"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a411cd57-2d77-4050-a33e-309dff5cfe52",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "lookup_unknown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "lookup_unknown"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "18dccc68-9d93-4d4b-b605-58734c6c8756",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "claim_lost",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "claim_lost"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "dc17a43a-4568-4454-8fe1-9943c9f41d85",
+                    "leftValue": "={{ $json.outcome }}",
+                    "rightValue": "over_attempts",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "over_attempts"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        -224
+      ],
+      "id": "580504bc-3ba2-43f3-81f3-6821b41f93c3",
+      "name": "Stale Outcome"
     }
   ],
   "connections": {
@@ -4059,7 +4645,13 @@
             "index": 0
           }
         ],
-        [],
+        [
+          {
+            "node": "Reclaim Stale Claim",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [],
         [
           {
@@ -4312,6 +4904,40 @@
           }
         ]
       ]
+    },
+    "Reclaim Stale Claim": {
+      "main": [
+        [
+          {
+            "node": "Reclaimed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reclaimed?": {
+      "main": [
+        [
+          {
+            "node": "Call 'order.stale_reclaim'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Call 'order.stale_reclaim'": {
+      "main": [
+        [
+          {
+            "node": "Stale Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -4350,9 +4976,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "fa2b70d5-3ce0-4417-9826-aea95320fbf3",
+  "versionId": "899dd988-7cb1-4f03-bdbc-eddda1b5e898",
   "activeVersionId": "fa2b70d5-3ce0-4417-9826-aea95320fbf3",
-  "versionCounter": 1314,
+  "versionCounter": 1430,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -4377,7 +5003,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version fa2b70d5",
-    "description": ""
+    "name": null,
+    "description": null
   }
 }
