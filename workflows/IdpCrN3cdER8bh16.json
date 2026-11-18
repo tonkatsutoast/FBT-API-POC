@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-18T00:16:41.438Z",
+  "updatedAt": "2026-11-18T19:23:33.403Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -132,8 +132,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        752,
-        -1056
+        1584,
+        -1184
       ],
       "executeOnce": true,
       "credentials": {
@@ -152,8 +152,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1424,
-        -1056
+        2256,
+        -1184
       ],
       "onError": "continueErrorOutput"
     },
@@ -193,8 +193,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2064,
-        -1104
+        2896,
+        -1232
       ],
       "credentials": {
         "httpBasicAuth": {
@@ -243,8 +243,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2272,
-        -1168
+        3104,
+        -1296
       ]
     },
     {
@@ -256,8 +256,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6608,
-        -640
+        7968,
+        -528
       ]
     },
     {
@@ -269,8 +269,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7728,
-        -640
+        9088,
+        -528
       ],
       "executeOnce": true,
       "onError": "continueErrorOutput"
@@ -288,8 +288,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        8320,
-        -640
+        9680,
+        -528
       ]
     },
     {
@@ -343,8 +343,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4848,
-        -592
+        6256,
+        -352
       ]
     },
     {
@@ -381,8 +381,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        5120,
-        -912
+        6528,
+        -672
       ],
       "retryOnFail": true,
       "waitBetweenTries": 2000,
@@ -408,8 +408,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4848,
-        -736
+        6256,
+        -496
       ]
     },
     {
@@ -421,8 +421,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        976,
-        -1056
+        1808,
+        -1184
       ]
     },
     {
@@ -456,8 +456,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1200,
-        -1056
+        2032,
+        -1184
       ]
     },
     {
@@ -473,8 +473,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1552,
-        -768
+        2384,
+        -896
       ]
     },
     {
@@ -484,8 +484,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7056,
-        -640
+        8416,
+        -528
       ],
       "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
       "name": "Build Uploads"
@@ -517,8 +517,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        7264,
-        -624
+        8624,
+        -512
       ],
       "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
       "name": "Anything to upload?"
@@ -545,8 +545,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        7504,
-        -640
+        8864,
+        -528
       ],
       "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
       "name": "Upload to Drive",
@@ -722,8 +722,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        112,
-        -240
+        128,
+        -256
       ]
     },
     {
@@ -1053,8 +1053,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2816,
-        -1216
+        3648,
+        -1344
       ],
       "alwaysOutputData": true,
       "onError": "continueErrorOutput"
@@ -1316,8 +1316,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2784,
-        -720
+        3616,
+        -848
       ],
       "alwaysOutputData": true
     },
@@ -1579,8 +1579,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        8016,
-        -640
+        9376,
+        -528
       ],
       "alwaysOutputData": true,
       "onError": "continueRegularOutput"
@@ -1604,8 +1604,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3008,
-        -1008
+        3840,
+        -1136
       ],
       "id": "2fe1420d-f17f-4194-a443-f64667104a01",
       "name": "Respond CRM Unavailable"
@@ -1638,8 +1638,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2496,
-        -1072
+        3328,
+        -1200
       ],
       "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
       "name": "Is CRM Error Retryable?"
@@ -1668,8 +1668,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2800,
-        -1008
+        3632,
+        -1136
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
       "name": "Delete Claim",
@@ -1688,8 +1688,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3264,
-        -560
+        4096,
+        -688
       ]
     },
     {
@@ -1874,8 +1874,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1376,
-        -768
+        2208,
+        -896
       ],
       "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
       "name": "Delete Claim (Lookup)",
@@ -1922,8 +1922,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1808,
-        -736
+        2640,
+        -864
       ],
       "id": "20913296-2538-4038-a760-5c1068177ab5",
       "name": "Delete Claim (Build)",
@@ -1940,8 +1940,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2016,
-        -736
+        2848,
+        -864
       ],
       "id": "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
       "name": "Respond Build Error"
@@ -2295,8 +2295,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        96,
-        -448
+        128,
+        -464
       ],
       "id": "e4b3e7bd-f1e9-4403-85ba-1a2070fb654d",
       "name": "Prepare Payment Context"
@@ -2308,8 +2308,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3440,
-        -1232
+        4384,
+        -1456
       ],
       "id": "8f97a045-e2a7-4568-a4ab-fe536137f279",
       "name": "Prepare Payment Input"
@@ -2407,8 +2407,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        4160,
-        -464
+        5568,
+        -224
       ],
       "id": "3b8ef798-e090-4f89-86e1-d44a906ef7f0",
       "name": "Call 'order.pay'"
@@ -2623,8 +2623,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        4464,
-        -544
+        5872,
+        -304
       ],
       "id": "8d5220a3-3b9a-4ce1-bdf8-f936e46b0a13",
       "name": "Payment Outcome"
@@ -2636,8 +2636,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4848,
-        -912
+        6256,
+        -672
       ],
       "id": "47d0119a-70f8-42fc-8241-fde2366f7ed3",
       "name": "Prepare Post Payment Context"
@@ -2653,8 +2653,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4848,
-        -416
+        6256,
+        -176
       ],
       "id": "a2f038b7-2386-440b-9d6d-1dac17a62b8c",
       "name": "Respond Payment Pending"
@@ -2670,8 +2670,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        96,
-        128
+        112,
+        144
       ],
       "id": "ce727bfe-1032-4554-9085-12223d14dda4",
       "name": "Respond CRM Unknown"
@@ -2687,8 +2687,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        96,
-        272
+        128,
+        304
       ],
       "id": "82a64755-0882-467b-8d2e-e5cf854e7f9f",
       "name": "Respond Order Failed"
@@ -2704,8 +2704,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4848,
-        -224
+        6256,
+        16
       ],
       "id": "f013570c-d304-4633-92fa-793782105c7e",
       "name": "Respond Payment Unknown"
@@ -2721,8 +2721,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        96,
-        448
+        128,
+        480
       ],
       "id": "c04ab302-9534-4598-bfba-6c187b1785b7",
       "name": "Respond Ledger Unknown"
@@ -2990,8 +2990,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1632,
-        -1072
+        2464,
+        -1200
       ],
       "id": "33321bb3-037e-4278-80cd-52ecb741cbdb",
       "name": "Heartbeat / Assert Claim",
@@ -3025,8 +3025,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1824,
-        -1072
+        2656,
+        -1200
       ],
       "id": "78bb8af6-011e-4c14-8d0c-57004a9e7c72",
       "name": "Heartbeat OK?"
@@ -3042,8 +3042,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2080,
-        -928
+        2912,
+        -1056
       ],
       "id": "3698f2a2-3a04-4a33-a414-e7ab34256329",
       "name": "Respond In Progress Heartbeat"
@@ -3059,8 +3059,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4848,
-        -16
+        6256,
+        224
       ],
       "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
       "name": "Respond Payment Error"
@@ -3093,8 +3093,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        5488,
-        -1024
+        6896,
+        -352
       ],
       "id": "e9811430-aa2f-4608-bdb4-a880860c7e64",
       "name": "Mark SO Paid OK?"
@@ -3354,8 +3354,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5712,
-        -704
+        7120,
+        -32
       ],
       "id": "d2f8bc5a-cc61-4d4c-a385-311baf6e8073",
       "name": "Record Mark Update Failure",
@@ -3373,8 +3373,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        5920,
-        -704
+        7328,
+        -32
       ],
       "id": "626caa5c-9f08-480b-abf8-1a276906ce68",
       "name": "Respond Created (CRM Pending)"
@@ -3390,8 +3390,8 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        6832,
-        -640
+        8192,
+        -528
       ]
     },
     {
@@ -3405,8 +3405,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        8032,
-        -448
+        9392,
+        -336
       ],
       "id": "d168e178-7c28-4df1-a3f2-64d36120d4b6",
       "name": "Response Created (Fallback)"
@@ -3439,8 +3439,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2976,
-        -720
+        3808,
+        -848
       ],
       "id": "d71bd094-60d3-4c13-b9e5-63d898d2174b",
       "name": "CRM Unknown?"
@@ -3473,8 +3473,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3088,
-        -1232
+        4032,
+        -1456
       ],
       "id": "c6da4cfa-f381-41ab-ab72-9bc99481e616",
       "name": "If SO Created"
@@ -3490,8 +3490,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3440,
-        -1040
+        4272,
+        -1168
       ],
       "id": "3dc2c80b-5491-4181-8942-2c206cf5dc67",
       "name": "Respond SO Record Failed"
@@ -3762,8 +3762,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        112,
-        -80
+        128,
+        -64
       ],
       "id": "4bbb7457-a9a0-4258-af64-a0bae87aa11f",
       "name": "Reclaim Stale Claim",
@@ -3819,7 +3819,7 @@
             "claim_execution_id": "={{ $execution.id }}",
             "request_id": "={{ $('Request ID').first().json.requestId }}",
             "vtiger_base_url": "={{ $('Build Context').first().json.vtiger_base_url }}",
-            "vtiger_account_id": "={{ $('Build Context').first().json.vtiger_account_id }}\n"
+            "vtiger_account_id": "={{ $('Build Context').first().json.vtiger_account_id }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -4071,16 +4071,149 @@
             }
           ]
         },
-        "options": {}
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "error"
+        }
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        1056,
-        -224
+        1072,
+        -208
       ],
       "id": "580504bc-3ba2-43f3-81f3-6821b41f93c3",
       "name": "Stale Outcome"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ (() => {\n  const here = $json ?? {};\n  const route = (() => { try { return $('Route Ledger').first().json ?? {}; } catch { return {}; } })();\n  const build = (() => { try { return $('Build Context').first().json ?? {}; } catch { return {}; } })();\n  const r = Object.keys(here).length ? (here.row ?? here) : (route.row ?? route);\n\n  return {\n    error: {\n      code: 'ORDER_IN_PROGRESS',\n      message: 'This order is being processed by another execution. Retry shortly with the same customerReferenceNumber.',\n      retryable: true,\n      requestId: $('Request ID').first().json.requestId,\n      details: [{\n        reason: here.outcome ?? 'stale_reclaim_lost',\n        ledger_status: r.status ?? 'PROCESSING',\n        order_id: r.order_id ?? build.order_id ?? null,\n        customer_reference_number: r.customer_reference_number ?? build.customer_reference_number ?? null,\n        salesorder_no: r.vtiger_so_number ?? null,\n        retry_after: 5\n      }]\n    }\n  };\n})() }}",
+        "options": {
+          "responseCode": 409,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Retry-After",
+                "value": "5"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        48
+      ],
+      "id": "c6c5c428-e1a6-4a8b-801d-99b6a7511e3f",
+      "name": "Respond Stale Reclaim",
+      "retryOnFail": false,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  error: {\n    code: 'DUPLICATE_SO',\n    message: 'Multiple SalesOrders exist for this reference. Manual reconciliation is required.',\n    retryable: false,\n    requestId: $('Request ID').first().json.requestId,\n    details: [{\n      order_id: $json.order_id ?? null,\n      customer_reference_number: $json.customer_reference_number ?? null,\n      count: $json.count ?? null,\n      salesorder_ids: $json.so_ids ?? []\n    }]\n  }\n} }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1376,
+        -112
+      ],
+      "id": "1ad9c77b-c25c-4dd3-98fa-fff5e2a4a6a0",
+      "name": "Respond Duplicate SO"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "fFLEyaujBHxKLmri",
+          "mode": "list",
+          "cachedResultName": "order_ledger",
+          "cachedResultUrl": "/projects/9gOu1DNGjYVeCAaR/datatables/fFLEyaujBHxKLmri"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idem_key",
+              "keyValue": "={{ $json.idem_key }}"
+            },
+            {
+              "keyName": "execution_id",
+              "keyValue": "={{ $execution.id }}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5104,
+        0
+      ],
+      "id": "f16b33ac-cdb5-4130-819e-03331450ebc3",
+      "name": "Assert Owner (Pre-Payment)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  error: {\n    code: $json.outcome ? 'STALE_OUTCOME_UNKNOWN' : 'STALE_SUBFLOW_ERROR',\n    message: 'Stale resolution returned an unexpected result. Contact support with this reference.',\n    retryable: false,\n    requestId: $('Request ID').first().json.requestId,\n    details: [{\n      outcome: $json.outcome ?? null,\n      idem_key: $json.idem_key ?? $('Reclaim Stale Claim').first().json.idem_key ?? null,\n      order_id: $json.order_id ?? $('Build Context').first().json.order_id ?? null,\n      customer_reference_number:\n        $json.customer_reference_number ?? $('Build Context').first().json.customer_reference_number ?? null,\n      error: $json.error?.message ?? $json.error ?? null\n    }]\n  }\n} }}",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1392,
+        272
+      ],
+      "id": "0d84d443-086c-46e4-9914-723e115d55ff",
+      "name": "Respond Stale Error"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b9c2fbf4-47cf-423c-87f3-96a636d79adb",
+              "leftValue": "={{ !!$json.idem_key }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        5328,
+        0
+      ],
+      "id": "09f6318c-88fd-483a-a87c-3c206b59494e",
+      "name": "Assert Owner (Pre-Payment)?"
     }
   ],
   "connections": {
@@ -4652,7 +4785,13 @@
             "index": 0
           }
         ],
-        [],
+        [
+          {
+            "node": "Respond CRM Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Respond CRM Unknown",
@@ -4680,7 +4819,7 @@
       "main": [
         [
           {
-            "node": "Call 'order.pay'",
+            "node": "Assert Owner (Pre-Payment)",
             "type": "main",
             "index": 0
           }
@@ -4691,7 +4830,7 @@
       "main": [
         [
           {
-            "node": "Call 'order.pay'",
+            "node": "Assert Owner (Pre-Payment)",
             "type": "main",
             "index": 0
           }
@@ -4925,7 +5064,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Respond Stale Reclaim",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Call 'order.stale_reclaim'": {
@@ -4933,6 +5078,102 @@
         [
           {
             "node": "Stale Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stale Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stale Outcome": {
+      "main": [
+        [
+          {
+            "node": "Prepare Payment Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Payment Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Lookup Products",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Duplicate SO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond CRM Unknown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stale Reclaim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stale Reclaim",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stale Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Owner (Pre-Payment)": {
+      "main": [
+        [
+          {
+            "node": "Assert Owner (Pre-Payment)?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Owner (Pre-Payment)?": {
+      "main": [
+        [
+          {
+            "node": "Call 'order.pay'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Stale Reclaim",
             "type": "main",
             "index": 0
           }
@@ -4976,9 +5217,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "899dd988-7cb1-4f03-bdbc-eddda1b5e898",
-  "activeVersionId": "fa2b70d5-3ce0-4417-9826-aea95320fbf3",
-  "versionCounter": 1430,
+  "versionId": "b879f3b5-8508-4f7c-be91-ee28f3aefb9c",
+  "activeVersionId": "b879f3b5-8508-4f7c-be91-ee28f3aefb9c",
+  "versionCounter": 1520,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -5003,7 +5244,7 @@
     }
   ],
   "versionMetadata": {
-    "name": null,
-    "description": null
+    "name": "Version b879f3b5",
+    "description": ""
   }
 }

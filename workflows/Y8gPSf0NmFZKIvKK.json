@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T23:56:22.988Z",
+  "updatedAt": "2026-11-18T18:48:51.220Z",
   "createdAt": "2026-11-17T23:11:13.620Z",
   "id": "Y8gPSf0NmFZKIvKK",
   "name": "order.stale_reclaim",
@@ -792,7 +792,9 @@
     },
     {
       "parameters": {
-        "url": "={{ $('When Executed by Another Workflow').first().json.vtiger_base_url }}/query\n",
+        "url": "={{ $('When Executed by Another Workflow').first().json.vtiger_base_url }}/query",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
@@ -821,6 +823,12 @@
       ],
       "id": "e7ff9a97-9dab-4d53-81e2-478d9f43e4ff",
       "name": "Lookup VTiger SO",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "jLqvj3hkJtbYAjcd",
+          "name": "vtiger API"
+        }
+      },
       "onError": "continueErrorOutput"
     },
     {
@@ -1983,6 +1991,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Record Lookup Unknown",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -2126,9 +2141,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "3f4b203d-b0a7-4e2e-8608-f882554e62c1",
-  "activeVersionId": "3f4b203d-b0a7-4e2e-8608-f882554e62c1",
-  "versionCounter": 220,
+  "versionId": "a5dd8e16-9e10-4186-9f76-8aeb7bf94bc9",
+  "activeVersionId": "a5dd8e16-9e10-4186-9f76-8aeb7bf94bc9",
+  "versionCounter": 224,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
@@ -2153,7 +2168,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 3f4b203d",
+    "name": "Version a5dd8e16",
     "description": ""
   }
 }
