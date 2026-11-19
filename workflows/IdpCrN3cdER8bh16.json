@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-19T20:12:08.409Z",
+  "updatedAt": "2026-11-19T23:08:38.960Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -262,7 +262,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  salesorder_id: $('Prepare Post Payment Context').first().json.vtiger_so_id ?? null,\n  salesorder_no: $('Prepare Post Payment Context').first().json.vtiger_so_number ?? null,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
+        "jsCode": "const ctx = $('Build Context').first().json;\nconst priced = $('Process Order').first().json;\nconst ct = $('Compute Tax').first().json;\nconst fmt = c => (c / 100).toFixed(2);\n\nconst studentItems = $('Students').all();\nconst hasStudents = studentItems[0]?.json?.has_students === true;\n\nreturn [{ json: {\n  order_id: ctx.order_id,\n  salesorder_id: $('Prepare Post Payment Context').first().json.vtiger_so_id ?? null,\n  salesorder_no: $('Prepare Post Payment Context').first().json.vtiger_so_number ?? null,\n  order_number: $('Build Uploads').first().json.order_number,\n  //po_number: ctx.po_number,\n  customerReferenceNumber: ctx.customer_reference_number,\n  customer_id: ctx.customer_id,\n  status: 'in process',\n  payment_status: 'paid',\n  crm_status: 'paid',\n  requestId: $('Request ID').first().json.requestId,\n  created_at: ctx.created_at,\n  currency: priced.currency,\n  line_items: priced.line_items.map(l => ({\n    sku: l.sku,\n    title: l.title,\n    quantity: l.quantity,\n    unit_price: fmt(l.unit_amount_cents),\n    line_total: fmt(l.line_total_cents),\n    lead_time: l.lead_time,\n    //crm_sales_order_id: so.id,\n    //crm_sales_order_no: so.salesorder_no\n  })),\n  student_count: hasStudents ? studentItems.length : 0,\n  art_work_provided: ctx.art_work_provided === true,\n  subtotal_amount: fmt(ct.subtotal_cents),\n  tax_amount: fmt(ct.tax_cents),\n  tax_rate: ct.tax_rate,\n  total_amount: fmt(ct.total_with_tax_cents)\n} }];"
       },
       "id": "b0b76abf-8361-4ffc-aafb-3433a28034bc",
       "name": "Build Confirmation",
@@ -2646,7 +2646,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ {\n  status: 'payment_pending',\n  order_id: $json.order_id ?? null,\n  salesorder_no: $json.salesorder_no ?? $json.vtiger_so_number ?? null,\n  payment_status: 'pending',\n  payment_intent_id: $json.stripe_pi_id ?? null,\n  requestId: $('Request ID').first().json.requestId,\n  retry_after: 5\n} }}",
+        "responseBody": "={{ {\n  status: 'PAYMENT_UNKNOWN' ? 'payment_unknown' : 'payment_pending',\n  order_id: $json.order_id ?? null,\n  salesorder_no: $json.salesorder_no ?? $json.vtiger_so_number ?? null,\n  payment_status: $json.status === 'PAYMENT_UNKNOWN' ? 'unknown' : 'pending',\n  payment_intent_id: $json.stripe_pi_id ?? null,\n  requestId: $('Request ID').first().json.requestId,\n  retry_after: 5\n} }}",
         "options": {
           "responseCode": 202
         }
@@ -2680,7 +2680,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ (() => {\n  const here = $json ?? {};\n  const row = here.row ?? here;\n  const status = String(row.status ?? 'UNKNOWN');\n  return {\n    error: {\n      code: status === 'AMOUNT_MISMATCH' ? 'AMOUNT_MISMATCH' : 'ORDER_FAILED',\n      message: status === 'AMOUNT_MISMATCH'\n        ? 'The SalesOrder total does not match the amount to charge. The order is on hold and requires manual review. Do not resubmit; contact support with this reference.'\n        : 'This order is in a terminal state and cannot be processed automatically. Do not resubmit; contact support with this reference.',\n      retryable: false,\n      requestId: $('Request ID').first().json.requestId,\n      details: [{\n        ledger_status: status,\n        order_id: row.order_id ?? null,\n        customer_reference_number: row.customer_reference_number ?? null,\n        salesorder_no: row.vtiger_so_number ?? null,\n        expected_amount_cents: row.amount_cents ?? null,\n        reason: row.error_message ?? null\n      }]\n    }\n  };\n})() }}",
+        "responseBody": "={{ (() => {\n  const here = $json ?? {};\n  const row = here.row ?? here;\n  const status = String(row.status ?? 'UNKNOWN');\n  return {\n    error: {\n      code: status === 'AMOUNT_MISMATCH' ? 'AMOUNT_MISMATCH' : 'ORDER_FAILED',\n      message: status === 'AMOUNT_MISMATCH'\n        ? 'The SalesOrder total does not match the amount to charge. The order is on hold and requires manual review. Do not resubmit; contact support with this reference.'\n        : 'This order is in a terminal state and cannot be processed automatically. Do not resubmit; contact support with this reference.',\n      retryable: false,\n      requestId: $('Request ID').first().json.requestId,\n      details: [{\n        ledger_status: status,\n        order_id: row.order_id ?? null,\n        customer_reference_number: row.customer_reference_number ?? null,\n        salesorder_no: row.vtiger_so_number ?? null,\n        expected_amount_cents: Number(row.amount_cents ?? 0),\n        reason: row.error_message ?? null\n      }]\n    }\n  };\n})() }}",
         "options": {
           "responseCode": 409
         }
@@ -5224,9 +5224,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "f8a324e5-5ef7-4b9c-bd0e-ff5c32ea8b35",
-  "activeVersionId": "f8a324e5-5ef7-4b9c-bd0e-ff5c32ea8b35",
-  "versionCounter": 1523,
+  "versionId": "71c01b25-6c8b-4b93-a39d-03b3952ad67a",
+  "activeVersionId": "71c01b25-6c8b-4b93-a39d-03b3952ad67a",
+  "versionCounter": 1528,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -5251,7 +5251,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version f8a324e5",
+    "name": "Version 71c01b25",
     "description": ""
   }
 }
