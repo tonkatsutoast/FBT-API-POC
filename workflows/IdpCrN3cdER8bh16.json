@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-18T19:23:33.403Z",
+  "updatedAt": "2026-11-19T20:12:08.409Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -173,7 +173,7 @@
             },
             {
               "name": "element",
-              "value": "={{ JSON.stringify($json.element) }}"
+              "value": "={{ JSON.stringify($('Build SalesOrder').first().json.element) }}"
             }
           ]
         },
@@ -370,7 +370,8 @@
         "options": {
           "response": {
             "response": {
-              "fullResponse": true
+              "fullResponse": true,
+              "responseFormat": "json"
             }
           },
           "timeout": 15000
@@ -4440,7 +4441,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Build Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Upload to Drive": {
@@ -5217,9 +5224,9 @@
     }
   ],
   "pinData": {},
-  "versionId": "b879f3b5-8508-4f7c-be91-ee28f3aefb9c",
-  "activeVersionId": "b879f3b5-8508-4f7c-be91-ee28f3aefb9c",
-  "versionCounter": 1520,
+  "versionId": "f8a324e5-5ef7-4b9c-bd0e-ff5c32ea8b35",
+  "activeVersionId": "f8a324e5-5ef7-4b9c-bd0e-ff5c32ea8b35",
+  "versionCounter": 1523,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -5244,7 +5251,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version b879f3b5",
+    "name": "Version f8a324e5",
     "description": ""
   }
 }

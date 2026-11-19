@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-17T20:14:54.516Z",
+  "updatedAt": "2026-11-19T20:04:31.130Z",
   "createdAt": "2026-11-11T19:05:04.348Z",
   "id": "55ty9WMD5eBWXnoB",
   "name": "order.pay",
@@ -131,7 +131,7 @@
           "parameters": [
             {
               "name": "Idempotency-Key",
-              "value": "={{ $json.idem_key }}:payment:{{ $json.payment_attempt }}"
+              "value": "={{ $('When Executed by Another Workflow').first().json.idem_key }}:payment:{{ $('When Executed by Another Workflow').first().json.payment_attempt }}"
             }
           ]
         },
@@ -141,7 +141,7 @@
           "parameters": [
             {
               "name": "amount",
-              "value": "={{ $json.amount_cents }}"
+              "value": "={{ Number($('When Executed by Another Workflow').first().json.amount_cents) }}"
             },
             {
               "name": "currency",
@@ -169,27 +169,23 @@
             },
             {
               "name": "description",
-              "value": "=Order {{ $json.order_id }}"
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}"
             },
             {
               "name": "metadata[order_id]",
-              "value": "={{ $json.order_id }}"
+              "value": "={{ $('When Executed by Another Workflow').first().json.order_id }}"
             },
             {
               "name": "metadata[customer_id]",
-              "value": "={{ $json.customer_id }}"
+              "value": "={{ $('When Executed by Another Workflow').first().json.customer_id }}"
             },
             {
               "name": "metadata[customer_reference_number]",
-              "value": "={{ $json.customer_reference_number }}"
-            },
-            {
-              "name": "error_on_requires_action",
-              "value": "true"
+              "value": "={{ $('When Executed by Another Workflow').first().json.customer_reference_number }}"
             },
             {
               "name": "metadata[idem_key]",
-              "value": "={{ $json.idem_key }}"
+              "value": "={{ $('When Executed by Another Workflow').first().json.idem_key }}"
             }
           ]
         },
@@ -3060,9 +3056,9 @@
   "meta": null,
   "nodeGroups": [],
   "pinData": {},
-  "versionId": "4cadee93-404e-455c-aefc-5dd936a3ff7a",
-  "activeVersionId": "4cadee93-404e-455c-aefc-5dd936a3ff7a",
-  "versionCounter": 435,
+  "versionId": "d87c6712-1044-48a4-86a1-a140e9483d4d",
+  "activeVersionId": "d87c6712-1044-48a4-86a1-a140e9483d4d",
+  "versionCounter": 445,
   "triggerCount": 0,
   "sourceWorkflowId": null,
   "tags": [],
@@ -3087,7 +3083,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 4cadee93",
+    "name": "Version d87c6712",
     "description": ""
   }
 }
