@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-11-19T23:08:38.960Z",
+  "updatedAt": "2026-11-19T23:33:06.533Z",
   "createdAt": "2026-10-01T18:20:32.768Z",
   "id": "IdpCrN3cdER8bh16",
   "name": "order.submit_v2",
@@ -65,7 +65,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        -1344,
+        -912,
         -240
       ]
     },
@@ -99,7 +99,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -1024,
+        -576,
         -240
       ]
     },
@@ -132,7 +132,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1584,
+        2032,
         -1184
       ],
       "executeOnce": true,
@@ -152,7 +152,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2256,
+        2704,
         -1184
       ],
       "onError": "continueErrorOutput"
@@ -193,7 +193,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        2896,
+        3344,
         -1232
       ],
       "credentials": {
@@ -243,7 +243,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3104,
+        3552,
         -1296
       ]
     },
@@ -256,7 +256,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        7968,
+        8416,
         -528
       ]
     },
@@ -269,7 +269,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        9088,
+        9536,
         -528
       ],
       "executeOnce": true,
@@ -288,7 +288,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        9680,
+        10128,
         -528
       ]
     },
@@ -305,7 +305,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        -768,
+        -320,
         -48
       ]
     },
@@ -343,7 +343,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6256,
+        6704,
         -352
       ]
     },
@@ -382,7 +382,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        6528,
+        6976,
         -672
       ],
       "retryOnFail": true,
@@ -409,7 +409,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6256,
+        6704,
         -496
       ]
     },
@@ -422,7 +422,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1808,
+        2256,
         -1184
       ]
     },
@@ -457,7 +457,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2032,
+        2480,
         -1184
       ]
     },
@@ -474,7 +474,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2384,
+        2832,
         -896
       ]
     },
@@ -485,7 +485,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        8416,
+        8864,
         -528
       ],
       "id": "a5a713a3-6a34-4cec-a148-9131f71a480b",
@@ -518,7 +518,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        8624,
+        9072,
         -512
       ],
       "id": "db28ef1d-397a-4f42-bfdd-0f8f4379b179",
@@ -546,7 +546,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        8864,
+        9312,
         -528
       ],
       "id": "27b090cb-3872-44f6-9a32-64f12bc579c2",
@@ -646,7 +646,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -736,
+        -288,
         -256
       ],
       "alwaysOutputData": true
@@ -706,7 +706,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        96,
+        544,
         -608
       ]
     },
@@ -723,7 +723,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        128,
+        576,
         -256
       ]
     },
@@ -748,7 +748,8 @@
             "execution_id": "={{ $execution.id }}",
             "payment_attempt": 1,
             "attempts": 0,
-            "last_error_code": "={{ '' }}"
+            "last_error_code": "={{ '' }}",
+            "request_hash": "={{ $('Hash Request').first().json.request_hash }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -983,7 +984,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        96,
+        544,
         -784
       ]
     },
@@ -1054,7 +1055,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3648,
+        4096,
         -1344
       ],
       "alwaysOutputData": true,
@@ -1317,7 +1318,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3616,
+        4064,
         -848
       ],
       "alwaysOutputData": true
@@ -1580,7 +1581,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        9376,
+        9824,
         -528
       ],
       "alwaysOutputData": true,
@@ -1605,7 +1606,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3840,
+        4288,
         -1136
       ],
       "id": "2fe1420d-f17f-4194-a443-f64667104a01",
@@ -1639,7 +1640,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3328,
+        3776,
         -1200
       ],
       "id": "59bf11df-7da7-4d1b-a60c-ff1afcfad02a",
@@ -1669,7 +1670,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        3632,
+        4080,
         -1136
       ],
       "id": "835d6c41-c465-4e60-9530-7f97692198b0",
@@ -1689,7 +1690,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4096,
+        4544,
         -688
       ]
     },
@@ -1702,7 +1703,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1184,
+        -736,
         -240
       ]
     },
@@ -1875,7 +1876,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2208,
+        2656,
         -896
       ],
       "id": "7fec76aa-271c-4e63-bdc9-5868677a9082",
@@ -1923,7 +1924,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2640,
+        3088,
         -864
       ],
       "id": "20913296-2538-4038-a760-5c1068177ab5",
@@ -1941,7 +1942,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2848,
+        3296,
         -864
       ],
       "id": "cc90b8fc-a12a-4f7e-a61c-9918be8488c6",
@@ -2009,12 +2010,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.idem_key);\nif (rows.length === 0) {\n  return [{ json: { route: 'new' } }];\n}\n\nrows.sort((a, b) => Number(a.id) - Number(b.id));\nconst row = rows[0];\nconst status = String(row.status ?? '');\n\nconst out = (route) => [{ json: { route, ...row } }];\n\nif (status === 'COMPLETED') return out('replay');\nif (status === 'PAID') return out('resume_post_payment');\nif (status === 'PAYMENT_FAILED') return out('resume_payment');\nif (status === 'PAYMENT_PENDING' || status === 'PAYMENT_UNKNOWN') return out('pending');\nif (status === 'SO_CREATED') return out('resume_payment');\nif (status === 'FAILED_CRM') return out('retry_crm');\nif (status === 'CRM_UNKNOWN') return out('pending_reconciliation');\nif (status === 'AMOUNT_MISMATCH') return out('terminal');\n\nif (status === 'PROCESSING') {\n  const raw = row.heartbeat_at || row.updatedAt || row.createdAt;\n  const ts = raw instanceof Date ? raw.getTime() : Date.parse(raw);\n  const ageMs = Number.isFinite(ts) ? Date.now() - ts : Infinity;\n  const STALE_MS = 10 * 60 * 1000; // 10 minutes\n  return out(ageMs < STALE_MS ? 'in_progress' : 'stale');\n}\nreturn out('unknown');"
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r && r.idem_key);\nif (rows.length === 0) {\n  return [{ json: { route: 'new' } }];\n}\n\nrows.sort((a, b) => Number(a.id) - Number(b.id));\nconst row = rows[0];\nconst status = String(row.status ?? '');\n\nconst out = (route) => [{ json: { route, ...row } }];\n\nconst incomingHash = $('Hash Request').first().json.request_hash;\n\n// Legacy rows without a hash are allowed to replay as before.\nif (row.request_hash && incomingHash && row.request_hash !== incomingHash) {\n  return out('hash_mismatch');\n}\n\n// Status checks after the hash check\nif (status === 'COMPLETED') return out('replay');\nif (status === 'PAID') return out('resume_post_payment');\nif (status === 'PAYMENT_FAILED') return out('resume_payment');\nif (status === 'PAYMENT_PENDING' || status === 'PAYMENT_UNKNOWN') return out('pending');\nif (status === 'SO_CREATED') return out('resume_payment');\nif (status === 'FAILED_CRM') return out('retry_crm');\nif (status === 'CRM_UNKNOWN') return out('pending_reconciliation');\nif (status === 'AMOUNT_MISMATCH') return out('terminal');\n\nif (status === 'PROCESSING') {\n  const raw = row.heartbeat_at || row.updatedAt || row.createdAt;\n  const ts = raw instanceof Date ? raw.getTime() : Date.parse(raw);\n  const ageMs = Number.isFinite(ts) ? Date.now() - ts : Infinity;\n  const STALE_MS = 10 * 60 * 1000; // 10 minutes\n  return out(ageMs < STALE_MS ? 'in_progress' : 'stale');\n}\nreturn out('unknown');"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -576,
+        -128,
         -256
       ],
       "id": "26948ae6-859d-413a-9762-08479120259c",
@@ -2272,6 +2273,31 @@
               },
               "renameOutput": true,
               "outputKey": "terminal"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "16a82f17-34f3-4167-9a1a-8908e4b7310f",
+                    "leftValue": "={{ $json.route }}",
+                    "rightValue": "hash_mismatch",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "hash_mismatch"
             }
           ]
         },
@@ -2283,7 +2309,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        -384,
+        64,
         -400
       ],
       "id": "115292cc-13c5-4198-9c35-8dc235e06767",
@@ -2296,7 +2322,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        128,
+        576,
         -464
       ],
       "id": "e4b3e7bd-f1e9-4403-85ba-1a2070fb654d",
@@ -2309,7 +2335,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4384,
+        4832,
         -1456
       ],
       "id": "8f97a045-e2a7-4568-a4ab-fe536137f279",
@@ -2408,7 +2434,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        5568,
+        6016,
         -224
       ],
       "id": "3b8ef798-e090-4f89-86e1-d44a906ef7f0",
@@ -2624,7 +2650,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        5872,
+        6320,
         -304
       ],
       "id": "8d5220a3-3b9a-4ce1-bdf8-f936e46b0a13",
@@ -2637,7 +2663,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        6256,
+        6704,
         -672
       ],
       "id": "47d0119a-70f8-42fc-8241-fde2366f7ed3",
@@ -2654,7 +2680,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6256,
+        6704,
         -176
       ],
       "id": "a2f038b7-2386-440b-9d6d-1dac17a62b8c",
@@ -2671,7 +2697,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        112,
+        560,
         144
       ],
       "id": "ce727bfe-1032-4554-9085-12223d14dda4",
@@ -2688,7 +2714,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        128,
+        576,
         304
       ],
       "id": "82a64755-0882-467b-8d2e-e5cf854e7f9f",
@@ -2705,7 +2731,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6256,
+        6704,
         16
       ],
       "id": "f013570c-d304-4633-92fa-793782105c7e",
@@ -2722,8 +2748,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        128,
-        480
+        592,
+        720
       ],
       "id": "c04ab302-9534-4598-bfba-6c187b1785b7",
       "name": "Respond Ledger Unknown"
@@ -2991,7 +3017,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2464,
+        2912,
         -1200
       ],
       "id": "33321bb3-037e-4278-80cd-52ecb741cbdb",
@@ -3026,7 +3052,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2656,
+        3104,
         -1200
       ],
       "id": "78bb8af6-011e-4c14-8d0c-57004a9e7c72",
@@ -3043,7 +3069,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2912,
+        3360,
         -1056
       ],
       "id": "3698f2a2-3a04-4a33-a414-e7ab34256329",
@@ -3060,7 +3086,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        6256,
+        6704,
         224
       ],
       "id": "799e1971-5a6b-4c7e-829e-38ec451a2632",
@@ -3094,7 +3120,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        6896,
+        7344,
         -352
       ],
       "id": "e9811430-aa2f-4608-bdb4-a880860c7e64",
@@ -3355,7 +3381,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        7120,
+        7568,
         -32
       ],
       "id": "d2f8bc5a-cc61-4d4c-a385-311baf6e8073",
@@ -3374,7 +3400,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        7328,
+        7776,
         -32
       ],
       "id": "626caa5c-9f08-480b-abf8-1a276906ce68",
@@ -3391,7 +3417,7 @@
       "type": "n8n-nodes-base.convertToFile",
       "typeVersion": 1.1,
       "position": [
-        8192,
+        8640,
         -528
       ]
     },
@@ -3406,7 +3432,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        9392,
+        9840,
         -336
       ],
       "id": "d168e178-7c28-4df1-a3f2-64d36120d4b6",
@@ -3440,7 +3466,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3808,
+        4256,
         -848
       ],
       "id": "d71bd094-60d3-4c13-b9e5-63d898d2174b",
@@ -3474,7 +3500,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        4032,
+        4480,
         -1456
       ],
       "id": "c6da4cfa-f381-41ab-ab72-9bc99481e616",
@@ -3491,7 +3517,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4272,
+        4720,
         -1168
       ],
       "id": "3dc2c80b-5491-4181-8942-2c206cf5dc67",
@@ -3763,7 +3789,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        128,
+        576,
         -64
       ],
       "id": "4bbb7457-a9a0-4258-af64-a0bae87aa11f",
@@ -3798,7 +3824,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        336,
+        784,
         -80
       ],
       "id": "cb255a7e-2b1c-46e2-9b58-17c7f5fce279",
@@ -3885,7 +3911,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        608,
+        1056,
         -128
       ],
       "id": "f7142480-2a9a-4eb0-a631-505c541ba79f",
@@ -4080,7 +4106,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        1072,
+        1520,
         -208
       ],
       "id": "580504bc-3ba2-43f3-81f3-6821b41f93c3",
@@ -4105,7 +4131,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1376,
+        1824,
         48
       ],
       "id": "c6c5c428-e1a6-4a8b-801d-99b6a7511e3f",
@@ -4124,7 +4150,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1376,
+        1824,
         -112
       ],
       "id": "1ad9c77b-c25c-4dd3-98fa-fff5e2a4a6a0",
@@ -4158,7 +4184,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        5104,
+        5552,
         0
       ],
       "id": "f16b33ac-cdb5-4130-819e-03331450ebc3",
@@ -4176,7 +4202,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1392,
+        1840,
         272
       ],
       "id": "0d84d443-086c-46e4-9914-723e115d55ff",
@@ -4210,11 +4236,55 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        5328,
+        5776,
         0
       ],
       "id": "09f6318c-88fd-483a-a87c-3c206b59494e",
       "name": "Assert Owner (Pre-Payment)?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $('Build Context').first().json;\n\n// Server-generated, transport, or volatile fields do not define the order.\nconst EXCLUDE = new Set([\n  'order_id',\n  'created_at',\n  'idem_key',\n  'reference_url',\n  'referenceNumber',\n  'customerId',\n  'customer_id',\n  'vtiger_base_url',\n  'vtiger_assigned_user_id',\n  'vtiger_account_id',\n  'vtiger_contact_id',\n  'stripe_customer_id',\n  'art_work_provided',\n  'art_work_field',\n  'art_work_file_name',\n  'art_work_mime_type',\n  'art_work_extension',\n  'art_work_invalid',\n  'is_multipart'\n]);\n\nconst sortKeys = (value) => {\n  if (Array.isArray(value)) return value.map(sortKeys);\n  if (value && typeof value === 'object') {\n    const out = {};\n    for (const key of Object.keys(value).sort()) out[key] = sortKeys(value[key]);\n    return out;\n  }\n  return value;\n};\n\nconst canonical = {};\nfor (const [key, value] of Object.entries(ctx)) {\n  if (EXCLUDE.has(key)) continue;\n  canonical[key] = sortKeys(value);\n}\n\nconst canonicalSorted = sortKeys(canonical);\n\nreturn [{\n  json: {\n    ...ctx,\n    canonical_request: JSON.stringify(canonicalSorted)\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        -240
+      ],
+      "id": "2d790be7-4752-4f74-b9cb-caaead736028",
+      "name": "Build Canonical Request"
+    },
+    {
+      "parameters": {
+        "value": "={{ $json.canonical_request }}",
+        "dataPropertyName": "request_hash"
+      },
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        -240
+      ],
+      "id": "b10b1778-0b9d-4eed-bcf0-9c24b27f335d",
+      "name": "Hash Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  error: {\n    code: 'IDEMPOTENCY_KEY_REUSED',\n    message: 'This customerReferenceNumber was already used with a different order payload. Use a new customerReferenceNumber.',\n    retryable: false,\n    requestId: $('Request ID').first().json.requestId,\n    details: [{\n      idem_key: $json.idem_key ?? null,\n      order_id: $json.order_id ?? null,\n      customer_reference_number: $json.customer_reference_number ?? null\n    }]\n  }\n} }}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        592,
+        496
+      ],
+      "id": "ae32fd1e-6327-49a0-ad58-1eb7e2fd1213",
+      "name": "Respond Idempotency Conflict"
     }
   ],
   "connections": {
@@ -4233,7 +4303,7 @@
       "main": [
         [
           {
-            "node": "Process Order",
+            "node": "Build Canonical Request",
             "type": "main",
             "index": 0
           }
@@ -4815,6 +4885,13 @@
         ],
         [
           {
+            "node": "Respond Idempotency Conflict",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "Respond Ledger Unknown",
             "type": "main",
             "index": 0
@@ -5186,6 +5263,28 @@
           }
         ]
       ]
+    },
+    "Build Canonical Request": {
+      "main": [
+        [
+          {
+            "node": "Hash Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash Request": {
+      "main": [
+        [
+          {
+            "node": "Process Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -5219,14 +5318,16 @@
         "51ab37c7-8d26-47bf-aab2-2571eaa92ece",
         "e6a60112-0131-467a-8a5f-b1126be8ba2b",
         "8b59c7ba-7fdf-4da9-8a11-02a0fa94cd11",
-        "3d45f218-89ef-4083-bfc4-ac6eadd0ae32"
+        "3d45f218-89ef-4083-bfc4-ac6eadd0ae32",
+        "2d790be7-4752-4f74-b9cb-caaead736028",
+        "b10b1778-0b9d-4eed-bcf0-9c24b27f335d"
       ]
     }
   ],
   "pinData": {},
-  "versionId": "71c01b25-6c8b-4b93-a39d-03b3952ad67a",
-  "activeVersionId": "71c01b25-6c8b-4b93-a39d-03b3952ad67a",
-  "versionCounter": 1528,
+  "versionId": "b9b54b50-a0f4-4eec-a255-8c2580a926ad",
+  "activeVersionId": "b9b54b50-a0f4-4eec-a255-8c2580a926ad",
+  "versionCounter": 1565,
   "triggerCount": 1,
   "sourceWorkflowId": null,
   "tags": [],
@@ -5251,7 +5352,7 @@
     }
   ],
   "versionMetadata": {
-    "name": "Version 71c01b25",
+    "name": "Version b9b54b50",
     "description": ""
   }
 }
